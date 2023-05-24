@@ -1,3 +1,9 @@
+globalThis.process = { env: { NODE_ENV: "development" } };
+if (!globalThis.console) globalThis.console = { log: app.log };
+if (!globalThis.setTimeout) {
+  globalThis.setTimeout = globalThis._os.setTimeout
+}
+
 class Context2d {
     transform() {}
     setTransform() {}
@@ -90,19 +96,23 @@ class Context2d {
     }
   }
 
-  let imageId = 0xff00;
+  let imageId = 0;
   class Image extends Elm {
     _src = '';
     get src() {
       return this._src;
     }
     set src(url) {
-      this.imageId = imageId++;
+      this.id = imageId++;
       this._src = url;
+      this.loadImage(this);
       setTimeout(() => {
         let onload = this.onload.bind(this);
         onload();
       }, 0);
+    }
+    loadImage(img) {
+      // ...
     }
   }
   
