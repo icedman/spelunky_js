@@ -83,8 +83,8 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
 
   // // SDL_RenderCopy(renderer, image, NULL, &dest);
   SDL_Point center;
-  center.x = sprite->ax;
-  center.y = sprite->ay;
+  center.x = 0;//sprite->ax;
+  center.y = 0;//sprite->ay;
 
   SDL_Rect src;
   src.x = sprite->sx;

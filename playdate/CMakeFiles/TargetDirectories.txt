@@ -1,0 +1,3 @@
+/home/iceman/Developer/Projects/games/spe/playdate/CMakeFiles/template.dir
+/home/iceman/Developer/Projects/games/spe/playdate/CMakeFiles/edit_cache.dir
+/home/iceman/Developer/Projects/games/spe/playdate/CMakeFiles/rebuild_cache.dir

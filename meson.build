@@ -29,7 +29,6 @@ src_includes = include_directories(
 add_global_arguments('-DCONFIG_VERSION="2021-03-27"', language: 'c')
 add_global_arguments('-DCONFIG_BIGNUM', language: 'c')
 add_global_arguments('-Denviron="DEV"', language: 'c')
-add_global_arguments('-Denviron="DEV"', language: 'c')
 quickjs_src_files = [
     'quickjs/cutils.c',
     'quickjs/libbf.c',

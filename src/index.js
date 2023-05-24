@@ -12,7 +12,7 @@ patch.drawObject = (obj,sprite,ax,ay,rot,x,y,f,g,h) => {
 
 // vml
 patch.drawSprite = (sprite, ax, ay, x, y, vol, wol, rot, aci, bci, lfi, mfi, gei) => {
-    // console.log(sprite);
+    console.log(sprite);
     // console.log(`${sprite['sxb']} ${sprite['txb']}`);
     // console.log(`${ax}, ${ay}, ${x}, ${y}, ${vol}, ${wol}, ${rot}`);
 }
