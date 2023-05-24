@@ -13,6 +13,8 @@ typedef enum {
   RIGHT,
   FIRE1,
   FIRE2,
+  FIRE3,
+  FIRE4,
   ESCAPE,
   SPACE,
   KEYS_END

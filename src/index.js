@@ -5,7 +5,7 @@ patch.drawObject = (obj,sprite,ax,ay,rot,x,y,f,g,h) => {
     let name = obj.rb;
     if (sprite && name.includes('sRun')) {
         // console.log(name);
-        console.log(sprite);
+        // console.log(sprite);
         console.log({name,ax,ay,rot,x,y,f,g,h});
     }
 }
@@ -21,12 +21,20 @@ debug.enable();
 
 if (globalThis.os) {
     patch.disableRequestFrame();
+
     patch.loadImage = (img) => {
         app.loadImage(img.id, img.src);
-    }
-    patch.drawSprite = (sprite, ax, ay, x, y, vol, wol, rot, aci, bci, lfi, mfi, gei) => {
-        app.drawImage(ax, ay, x, y, rot, sprite['exb'], sprite['fxb'], sprite['sxb'], sprite['txb']);
-    }
+    };
+
+    patch.drawObject = () => {};
+
+    patch.drawSprite = (sprite, ax, ay, x, y, flip, wol, rot, aci, bci, lfi, mfi, gei) => {
+        var sx = sprite['exb'];
+        var sy = sprite['fxb'];
+        var sw = sprite['sxb'];
+        var sh = sprite['txb'];
+        app.drawImage(ax, ay, x, y, flip, sx, sy, sw, sh);
+    };
 }
 
 window.onload();

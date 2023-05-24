@@ -35,6 +35,7 @@ typedef struct sprite_t {
   int sy;
   int sw;
   int sh;
+  int flipped;
   float rot;
 } sprite_t;
 
@@ -66,7 +67,9 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   SDL_Renderer *renderer = (SDL_Renderer *)context->renderer;
   float scale = 2;
 
-  // printf("%d %d\n", sprite->sw,sprite->sh);
+  // if (sprite->sw == 0) {
+    // printf("%d %d\n", sprite->sw,sprite->sh);
+  // }
 
   if (sprite->sw > 16 * 10) return;
 
@@ -89,9 +92,16 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   src.w = sprite->sw;
   src.h = sprite->sh;
 
-  bool flipped = false;
+  bool flipped = sprite->flipped == -1;
   SDL_RenderCopyEx(renderer, sprite->texture, &src, &dest, 0, &center,
                    flipped ? SDL_FLIP_HORIZONTAL : 0);
+
+  // vector_t p1, p2;
+  // p1.x = dest.x;
+  // p1.y = dest.y;
+  // p2.x = dest.x + 32;
+  // p2.y = dest.y + 32;
+  // ContextDrawLine(context, p1, p2);
 }
 
 static JSRuntime* rt = 0;
@@ -137,7 +147,7 @@ static JSValue js_draw_image(JSContext* ctx, JSValueConst this_val,
     JS_ToInt32(ctx, &sprite->ay, argv[1]);
     JS_ToInt32(ctx, &sprite->x, argv[2]);
     JS_ToInt32(ctx, &sprite->y, argv[3]);
-    // rot argv[4]
+    JS_ToInt32(ctx, &sprite->flipped, argv[4]);
     JS_ToInt32(ctx, &sprite->sx, argv[5]);
     JS_ToInt32(ctx, &sprite->sy, argv[6]);
     JS_ToInt32(ctx, &sprite->sw, argv[7]);
@@ -226,6 +236,73 @@ void ScriptUpdate() {
         JS_ResetUncatchableError(ctx);
     }
 }
+
+const char *keyA = "a";
+const char *keyS = "s";
+const char *keyZ = "z";
+const char *keyX = "x";
+const char *keyLeft = "ArrowLeft";
+const char *keyRight = "ArrowRight";
+const char *keyUp = "ArrowUp";
+const char *keyDown = "ArrowDown";
+
+const char *keyNames[] = {
+  "",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "a",
+  "s",
+  "z",
+  "x",
+  "Escape",
+  "Space",
+};
+
+const int keyCodes[] = {
+  0,
+  38,
+  40,
+  37,
+  39,
+  65,
+  83,
+  90,
+  88,
+  27,
+  32,
+};
+
+void ScriptSendKeyDown(int key) {
+  char script[64];
+  sprintf(script, "window.onkeydown(new KeyEvent('%s', %d));", keyNames[key], keyCodes[key]);
+  JSValue ret = JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
+  if (JS_IsException(ret)) {
+      js_std_dump_error(ctx);
+      JS_ResetUncatchableError(ctx);
+  }
+}
+
+void ScriptSendKeyUp(int key) {
+  char script[64];
+  sprintf(script, "window.onkeyup(new KeyEvent('%s', %d));", keyNames[key], keyCodes[key]);
+  JSValue ret = JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
+  if (JS_IsException(ret)) {
+      js_std_dump_error(ctx);
+      JS_ResetUncatchableError(ctx);
+  }
+}
+
+// {
+//     char *input = "window.update();";
+//     JSValue ret = JS_Eval(ctx, input, strlen(input), "<input>", JS_EVAL_TYPE_GLOBAL);
+//     if (JS_IsException(ret)) {
+//         js_std_dump_error(ctx);
+//         JS_ResetUncatchableError(ctx);
+//     }
+// }
+
 
 void ScriptRunFile(char *path) {
   FILE *fp = fopen(path, "r");
@@ -352,6 +429,12 @@ int main(int argc, char **argv) {
         case SDLK_SPACE:
           game.keys[SPACE] = down;
           break;
+        case SDLK_z:
+          game.keys[FIRE3] = down;
+          break;
+        case SDLK_x:
+          game.keys[FIRE4] = down;
+          break;
         case SDLK_a:
           game.keys[FIRE1] = down;
           break;
@@ -366,18 +449,19 @@ int main(int argc, char **argv) {
     int ticks = SDL_GetTicks();
 
     {
-      js_std_loop(ctx);
       float dt = ticks - lastJSTicks;
       if (dt > 16) {
         lastJSTicks = ticks;
         spriteIndex = 0;
         ScriptUpdate();
+        js_std_loop(ctx);
       }
     }
 
     float dt = ticks - lastTicks;
-    if (dt < 12)
+    if (dt < 12) {
       continue;
+    }
     lastTicks = ticks;
     if (dt > 64) {
       dt = 64;
@@ -386,6 +470,16 @@ int main(int argc, char **argv) {
     GameUpdate(&game, dt / 1000);
     if (game.done)
       break;
+
+    // send keys
+    for(int i=0; i<KEYS_END; i++) {
+      if (game.keysPressed[i]) {
+        ScriptSendKeyDown(i);
+      }
+      if (game.keysReleased[i]) {
+        ScriptSendKeyUp(i);
+      }
+    }
 
     if (spriteIndex == 0) continue;
 

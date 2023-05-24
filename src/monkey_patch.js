@@ -169,6 +169,17 @@ class Context2d {
   
   alert = console.log;
 
+class KeyEvent {
+  constructor(k, w) {
+    this.key = k;
+    this.code = k;
+    this.keyCode = w;
+    this.which = w;
+    window.event = this;
+  }  
+  preventDefault() {}
+}
+
 module.exports  = {
     XMLHttpRequest,
     Audio,
