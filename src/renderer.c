@@ -55,4 +55,3 @@ void RenderEntities(list_t *entityList, context_t *context) {
     n = n->next;
   }
 }
-

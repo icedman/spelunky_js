@@ -25,8 +25,7 @@ void GameInit(game_t *gm) {
 
 game_t *GameInstance() { return gameInstance; }
 
-void GameDestroy(game_t *gm) {
-}
+void GameDestroy(game_t *gm) {}
 
 void GameUpdate(game_t *gm, float delta_time) {
   gm->ticks += delta_time;
@@ -71,6 +70,4 @@ void GameEnterMenu(game_t *game) {
   GameUpdate(game, 0);
 }
 
-void GameEnterRace(game_t *game) {
-  GameUpdate(game, 0);
-}
+void GameEnterRace(game_t *game) { GameUpdate(game, 0); }

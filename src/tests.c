@@ -1,12 +1,10 @@
 #include "tests.h"
-#include "renderer.h"
 #include "game.h"
+#include "renderer.h"
 
 float zoom = 1.0;
 
-void testEnter(game_t *gm, scene_t *scn) {
-  GameDestroy(gm);
-}
+void testEnter(game_t *gm, scene_t *scn) { GameDestroy(gm); }
 
 void testUpdate(game_t *gm, scene_t *scn, float delta_time) {
   if (gm->keysPressed[ESCAPE]) {
@@ -43,7 +41,6 @@ void testRender(game_t *gm, scene_t *scn, context_t *context) {
   int width = context->width;
   int height = context->height;
   ContextScale(context, zoom);
-
 }
 
 void TestSceneInit(sceneTest_t *scene) {

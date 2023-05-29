@@ -2,6 +2,7 @@
 #include <SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <vector.h>
 
 #include "context.h"
@@ -24,6 +25,23 @@
 #define MAX_IMAGES 16
 static char imagePaths[MAX_IMAGES][256];
 static SDL_Texture *images[MAX_IMAGES];
+
+#define SCALE 2
+#define WIDTH (320 * SCALE)
+#define HEIGHT (240 * SCALE)
+
+JSValue global_obj, app;
+
+#define TX_TIMER_BEGIN                                                         \
+  clock_t _start, _end;                                                        \
+  double _cpu_time_used;                                                       \
+  _start = clock();
+
+#define TX_TIMER_RESET _start = clock();
+
+#define TX_TIMER_END                                                           \
+  _end = clock();                                                              \
+  _cpu_time_used = ((double)(_end - _start)) / CLOCKS_PER_SEC;
 
 typedef struct sprite_t {
   SDL_Texture *texture;
@@ -65,26 +83,29 @@ void _freeImage(void *context, void *image) {}
 void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   vector_t vt = VectorTransformed(&pos, context->matrixStack.matrix);
   SDL_Renderer *renderer = (SDL_Renderer *)context->renderer;
-  float scale = 2;
+  float scale = SCALE;
 
   // if (sprite->sw == 0) {
-    // printf("%d %d\n", sprite->sw,sprite->sh);
+  // printf("%d %d\n", sprite->sw,sprite->sh);
   // }
 
-  if (sprite->sw > 16 * 10) return;
+  if (sprite->sw > 16 * 8) {
+    return;
+  }
 
-  // int sw, sh;
-  // SDL_QueryTexture(sprite->texture, NULL, NULL, &sw, &sh);
   SDL_Rect dest;
   dest.x = vt.x * scale;
   dest.y = vt.y * scale;
-  dest.w = sprite->sw * scale;
-  dest.h = sprite->sh * scale;
+  dest.w = (sprite->sw + 1.5) * scale;
+  dest.h = (sprite->sh + 1.5) * scale;
 
   // // SDL_RenderCopy(renderer, image, NULL, &dest);
   SDL_Point center;
-  center.x = 0;//sprite->ax;
-  center.y = 0;//sprite->ay;
+  center.x = 0; // sprite->ax;
+  center.y = 0; // sprite->ay;
+
+  dest.x -= sprite->ax * scale;
+  dest.y -= sprite->ay * scale;
 
   SDL_Rect src;
   src.x = sprite->sx;
@@ -104,137 +125,133 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   // ContextDrawLine(context, p1, p2);
 }
 
-static JSRuntime* rt = 0;
-static JSContext* ctx = 0;
+static JSRuntime *rt = 0;
+static JSContext *ctx = 0;
 
-static JSValue js_log(JSContext* ctx, JSValueConst this_val,
-    int argc, JSValueConst* argv)
-{
-    printf("log: ");
-    int i;
-    const char* str;
-    for (i = 0; i < argc; i++) {
-        str = JS_ToCString(ctx, argv[i]);
-        if (!str)
-            return JS_EXCEPTION;
-        printf("%s\n", str);
-        JS_FreeCString(ctx, str);
-    }
-    return JS_UNDEFINED;
-}
-
-static JSValue js_load_image(JSContext* ctx, JSValueConst this_val,
-    int argc, JSValueConst* argv)
-{
-    int id = -1;
-    JS_ToInt32(ctx, &id, argv[0]);
-    const char* str = JS_ToCString(ctx, argv[1]);
+static JSValue js_log(JSContext *ctx, JSValueConst this_val, int argc,
+                      JSValueConst *argv) {
+  printf("log: ");
+  int i;
+  const char *str;
+  for (i = 0; i < argc; i++) {
+    str = JS_ToCString(ctx, argv[i]);
     if (!str)
       return JS_EXCEPTION;
-
-    printf("load %d %s\n", id, str);
-    strcpy(imagePaths[id], str);
-
+    printf("%s\n", str);
     JS_FreeCString(ctx, str);
-    return JS_UNDEFINED;
+  }
+  return JS_UNDEFINED;
 }
 
-static JSValue js_draw_image(JSContext* ctx, JSValueConst this_val,
-    int argc, JSValueConst* argv)
-{
-    sprite_t *sprite = &sprites[spriteIndex++];
-    JS_ToInt32(ctx, &sprite->ax, argv[0]);
-    JS_ToInt32(ctx, &sprite->ay, argv[1]);
-    JS_ToInt32(ctx, &sprite->x, argv[2]);
-    JS_ToInt32(ctx, &sprite->y, argv[3]);
-    JS_ToInt32(ctx, &sprite->flipped, argv[4]);
-    JS_ToInt32(ctx, &sprite->sx, argv[5]);
-    JS_ToInt32(ctx, &sprite->sy, argv[6]);
-    JS_ToInt32(ctx, &sprite->sw, argv[7]);
-    JS_ToInt32(ctx, &sprite->sh, argv[8]);
-    return JS_UNDEFINED;
+static JSValue js_load_image(JSContext *ctx, JSValueConst this_val, int argc,
+                             JSValueConst *argv) {
+  int id = -1;
+  JS_ToInt32(ctx, &id, argv[0]);
+  const char *str = JS_ToCString(ctx, argv[1]);
+  if (!str)
+    return JS_EXCEPTION;
+
+  printf("load %d %s\n", id, str);
+  strcpy(imagePaths[id], str);
+
+  JS_FreeCString(ctx, str);
+  return JS_UNDEFINED;
+}
+
+static JSValue js_draw_image(JSContext *ctx, JSValueConst this_val, int argc,
+                             JSValueConst *argv) {
+  sprite_t *sprite = &sprites[spriteIndex++];
+  JS_ToInt32(ctx, &sprite->ax, argv[0]);
+  JS_ToInt32(ctx, &sprite->ay, argv[1]);
+  JS_ToInt32(ctx, &sprite->x, argv[2]);
+  JS_ToInt32(ctx, &sprite->y, argv[3]);
+  JS_ToInt32(ctx, &sprite->flipped, argv[4]);
+  JS_ToInt32(ctx, &sprite->sx, argv[5]);
+  JS_ToInt32(ctx, &sprite->sy, argv[6]);
+  JS_ToInt32(ctx, &sprite->sw, argv[7]);
+  JS_ToInt32(ctx, &sprite->sh, argv[8]);
+  return JS_UNDEFINED;
 }
 
 /* also used to initialize the worker context */
-static JSContext* JS_NewCustomContext(JSRuntime* rt)
-{
-    JSContext* ctx;
-    ctx = JS_NewContext(rt);
-    if (!ctx)
-        return NULL;
-    /* system modules */
-    js_init_module_std(ctx, "std");
-    js_init_module_os(ctx, "os");
-    return ctx;
+static JSContext *JS_NewCustomContext(JSRuntime *rt) {
+  JSContext *ctx;
+  ctx = JS_NewContext(rt);
+  if (!ctx)
+    return NULL;
+  /* system modules */
+  js_init_module_std(ctx, "std");
+  js_init_module_os(ctx, "os");
+  return ctx;
 }
 
-void ScriptingInit()
-{
-    // init scripting
-    rt = JS_NewRuntime();
-    js_std_set_worker_new_context_func(JS_NewCustomContext);
-    js_std_init_handlers(rt);
-    ctx = JS_NewCustomContext(rt);
-    if (!ctx) {
-        fprintf(stderr, "qjs: cannot allocate JS context\n");
-        exit(2);
-    }
+void ScriptingInit() {
+  // init scripting
+  rt = JS_NewRuntime();
+  js_std_set_worker_new_context_func(JS_NewCustomContext);
+  js_std_init_handlers(rt);
+  ctx = JS_NewCustomContext(rt);
+  if (!ctx) {
+    fprintf(stderr, "qjs: cannot allocate JS context\n");
+    exit(2);
+  }
 
-    /* loader for ES6 modules */
-    JS_SetModuleLoaderFunc(rt, NULL, js_module_loader, NULL);
+  /* loader for ES6 modules */
+  JS_SetModuleLoaderFunc(rt, NULL, js_module_loader, NULL);
 
-    // ctx = JS_NewContextRaw(rt);
-    // JS_AddIntrinsicBaseObjects(ctx);
-    // JS_AddIntrinsicEval(ctx);
+  // ctx = JS_NewContextRaw(rt);
+  // JS_AddIntrinsicBaseObjects(ctx);
+  // JS_AddIntrinsicEval(ctx);
 
-    JSValue global_obj, app;
+  global_obj = JS_GetGlobalObject(ctx);
+  app = JS_NewObject(ctx);
+  JS_SetPropertyStr(ctx, app, "log", JS_NewCFunction(ctx, js_log, "log", 1));
+  JS_SetPropertyStr(ctx, app, "loadImage",
+                    JS_NewCFunction(ctx, js_load_image, "loadImage", 1));
+  JS_SetPropertyStr(ctx, app, "drawImage",
+                    JS_NewCFunction(ctx, js_draw_image, "drawImage", 1));
+  JS_SetPropertyStr(ctx, global_obj, "app", app);
+  JS_FreeValue(ctx, global_obj);
 
-    global_obj = JS_GetGlobalObject(ctx);
+  JSValue ret;
 
-    app = JS_NewObject(ctx);
-    JS_SetPropertyStr(ctx, app, "log", JS_NewCFunction(ctx, js_log, "log", 1));
-    JS_SetPropertyStr(ctx, app, "loadImage", JS_NewCFunction(ctx, js_load_image, "loadImage", 1));
-    JS_SetPropertyStr(ctx, app, "drawImage", JS_NewCFunction(ctx, js_draw_image, "drawImage", 1));
-    JS_SetPropertyStr(ctx, global_obj, "app", app);
-    JS_FreeValue(ctx, global_obj);
-
-    JSValue ret;
-
-    char *imports = "import * as std from 'std'; \
+  char *imports = "import * as std from 'std'; \
       import * as os from 'os'; \
       globalThis._os = os; \
       globalThis._std = std;";
 
-    ret = JS_Eval(ctx, imports, strlen(imports), "<input>", JS_EVAL_TYPE_MODULE);
-    if (JS_IsException(ret)) {
-        printf("JS err : %s\n", JS_ToCString(ctx, JS_GetException(ctx)));
-        js_std_dump_error(ctx);
-        JS_ResetUncatchableError(ctx);
-    }
+  ret = JS_Eval(ctx, imports, strlen(imports), "<input>", JS_EVAL_TYPE_MODULE);
+  if (JS_IsException(ret)) {
+    printf("JS err : %s\n", JS_ToCString(ctx, JS_GetException(ctx)));
+    js_std_dump_error(ctx);
+    JS_ResetUncatchableError(ctx);
+  }
 
-    {
-        char *input = "app.log('hello world');";
-        JSValue ret = JS_Eval(ctx, input, strlen(input), "<input>", JS_EVAL_TYPE_GLOBAL);
-        if (JS_IsException(ret)) {
-            js_std_dump_error(ctx);
-            JS_ResetUncatchableError(ctx);
-        }
+  {
+    char *input = "app.log('hello world');";
+    JSValue ret =
+        JS_Eval(ctx, input, strlen(input), "<input>", JS_EVAL_TYPE_GLOBAL);
+    if (JS_IsException(ret)) {
+      js_std_dump_error(ctx);
+      JS_ResetUncatchableError(ctx);
     }
+  }
 }
 
 void ScriptingShutdown() {
-    js_std_free_handlers(rt);
-    JS_FreeContext(ctx);
-    JS_FreeRuntime(rt);
+  js_std_free_handlers(rt);
+  JS_FreeContext(ctx);
+  JS_FreeRuntime(rt);
 }
 
 void ScriptUpdate() {
-    char *input = "window.update();";
-    JSValue ret = JS_Eval(ctx, input, strlen(input), "<input>", JS_EVAL_TYPE_GLOBAL);
-    if (JS_IsException(ret)) {
-        js_std_dump_error(ctx);
-        JS_ResetUncatchableError(ctx);
-    }
+  char *input = "window.update();";
+  JSValue ret =
+      JS_Eval(ctx, input, strlen(input), "<input>", JS_EVAL_TYPE_GLOBAL);
+  if (JS_IsException(ret)) {
+    js_std_dump_error(ctx);
+    JS_ResetUncatchableError(ctx);
+  }
 }
 
 const char *keyA = "a";
@@ -247,62 +264,46 @@ const char *keyUp = "ArrowUp";
 const char *keyDown = "ArrowDown";
 
 const char *keyNames[] = {
-  "",
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowRight",
-  "a",
-  "s",
-  "z",
-  "x",
-  "Escape",
-  "Space",
+    "",  "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "a",
+    "s", "z",       "x",         "Escape",    "Space",
 };
 
 const int keyCodes[] = {
-  0,
-  38,
-  40,
-  37,
-  39,
-  65,
-  83,
-  90,
-  88,
-  27,
-  32,
+    0, 38, 40, 37, 39, 65, 83, 90, 88, 27, 32,
 };
 
 void ScriptSendKeyDown(int key) {
   char script[64];
-  sprintf(script, "window.onkeydown(new KeyEvent('%s', %d));", keyNames[key], keyCodes[key]);
-  JSValue ret = JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
+  sprintf(script, "window.onkeydown(new KeyEvent('%s', %d));", keyNames[key],
+          keyCodes[key]);
+  JSValue ret =
+      JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
   if (JS_IsException(ret)) {
-      js_std_dump_error(ctx);
-      JS_ResetUncatchableError(ctx);
+    js_std_dump_error(ctx);
+    JS_ResetUncatchableError(ctx);
   }
 }
 
 void ScriptSendKeyUp(int key) {
   char script[64];
-  sprintf(script, "window.onkeyup(new KeyEvent('%s', %d));", keyNames[key], keyCodes[key]);
-  JSValue ret = JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
+  sprintf(script, "window.onkeyup(new KeyEvent('%s', %d));", keyNames[key],
+          keyCodes[key]);
+  JSValue ret =
+      JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
   if (JS_IsException(ret)) {
-      js_std_dump_error(ctx);
-      JS_ResetUncatchableError(ctx);
+    js_std_dump_error(ctx);
+    JS_ResetUncatchableError(ctx);
   }
 }
 
 // {
 //     char *input = "window.update();";
-//     JSValue ret = JS_Eval(ctx, input, strlen(input), "<input>", JS_EVAL_TYPE_GLOBAL);
-//     if (JS_IsException(ret)) {
+//     JSValue ret = JS_Eval(ctx, input, strlen(input), "<input>",
+//     JS_EVAL_TYPE_GLOBAL); if (JS_IsException(ret)) {
 //         js_std_dump_error(ctx);
 //         JS_ResetUncatchableError(ctx);
 //     }
 // }
-
 
 void ScriptRunFile(char *path) {
   FILE *fp = fopen(path, "r");
@@ -311,14 +312,14 @@ void ScriptRunFile(char *path) {
     size_t sz = ftell(fp);
     // fprintf(stderr, "%d\n", sz);
     fseek(fp, 0, SEEK_SET);
-    char *content = (char*)malloc(sz);
+    char *content = (char *)malloc(sz);
     fread(content, sz, 1, fp);
     // fprintf(stderr, "%s\n", content);
     fclose(fp);
     JSValue ret = JS_Eval(ctx, content, sz, path, JS_EVAL_TYPE_GLOBAL);
     if (JS_IsException(ret)) {
-        js_std_dump_error(ctx);
-        JS_ResetUncatchableError(ctx);
+      js_std_dump_error(ctx);
+      JS_ResetUncatchableError(ctx);
     }
     free(content);
   }
@@ -338,16 +339,16 @@ void _drawLine(void *ctx, vector_t v1, vector_t v2) {
 }
 
 int main(int argc, char **argv) {
-  for(int i=0; i<MAX_IMAGES; i++) {
+  for (int i = 0; i < MAX_IMAGES; i++) {
     imagePaths[i][0] = 0;
     images[i] = NULL;
   }
   FastRandomInit(0);
 
   ScriptingInit();
-  
-  int width = 800;
-  int height = 600;
+
+  int width = WIDTH;
+  int height = HEIGHT;
   context_t context;
 
   FontInit();
@@ -369,14 +370,15 @@ int main(int argc, char **argv) {
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
   SDL_EnableScreenSaver();
   SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
-  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+
   atexit(SDL_Quit);
 
   SDL_DisplayMode dm;
   SDL_GetCurrentDisplayMode(0, &dm);
 
-  width = dm.w * 0.75;
-  height = dm.h * 0.75;
+  // width = dm.w * 0.75;
+  // height = dm.h * 0.75;
 
   ContextInit(&context, width, height);
 
@@ -397,7 +399,9 @@ int main(int argc, char **argv) {
   int trIdx = -1;
 
   ScriptRunFile("./dist/index.js");
-    
+
+  int frameSkip = 0;
+
   int lastTicks = SDL_GetTicks();
   int lastJSTicks = lastTicks;
   while (!game.done) {
@@ -450,11 +454,49 @@ int main(int argc, char **argv) {
 
     {
       float dt = ticks - lastJSTicks;
-      if (dt > 16) {
+      if (dt > 15) {
         lastJSTicks = ticks;
         spriteIndex = 0;
+
+        TX_TIMER_BEGIN
         ScriptUpdate();
         js_std_loop(ctx);
+        TX_TIMER_END
+        // printf("%fsecs\n", _cpu_time_used);
+
+        JSValue c = JS_GetPropertyStr(ctx, app, "spriteCount");
+        int spriteCount = 0;
+        JS_ToInt32(ctx, &spriteCount, c);
+        if (spriteCount > 0) {
+          spriteIndex = 0;
+          JSValue sprs = JS_GetPropertyStr(ctx, app, "sprites");
+          for (int i = 0; i < spriteCount; i++) {
+            sprite_t *sprite = &sprites[spriteIndex++];
+            JSValue spr = JS_GetPropertyUint32(ctx, sprs, i);
+            JSValue prop = JS_GetPropertyUint32(ctx, spr, 0);
+            JS_ToInt32(ctx, &sprite->ax, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 1);
+            JS_ToInt32(ctx, &sprite->ay, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 2);
+            JS_ToInt32(ctx, &sprite->x, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 3);
+            JS_ToInt32(ctx, &sprite->y, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 4);
+            JS_ToInt32(ctx, &sprite->flipped, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 5);
+            JS_ToInt32(ctx, &sprite->sx, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 6);
+            JS_ToInt32(ctx, &sprite->sy, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 7);
+            JS_ToInt32(ctx, &sprite->sw, prop);
+            prop = JS_GetPropertyUint32(ctx, spr, 8);
+            JS_ToInt32(ctx, &sprite->sh, prop);
+            // JS_FreeValue(ctx, spr);
+            // printf("%d (%d, %d)\n", i, sprite->x, sprite->y);
+          }
+          // JS_FreeValue(ctx, sprs);
+          // printf(">%d\n", spriteCount);
+        }
       }
     }
 
@@ -472,7 +514,7 @@ int main(int argc, char **argv) {
       break;
 
     // send keys
-    for(int i=0; i<KEYS_END; i++) {
+    for (int i = 0; i < KEYS_END; i++) {
       if (game.keysPressed[i]) {
         ScriptSendKeyDown(i);
       }
@@ -481,7 +523,14 @@ int main(int argc, char **argv) {
       }
     }
 
-    if (spriteIndex == 0) continue;
+    // frameSkip++;
+    // if (frameSkip % 2 == 0) {
+    //   frameSkip = 0;
+    //   continue;
+    // }
+
+    if (spriteIndex == 0)
+      continue;
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -494,7 +543,7 @@ int main(int argc, char **argv) {
       images[0] = _loadImage(&context, imagePaths[0]);
     }
 
-    for(int i=0; i<spriteIndex; i++) {
+    for (int i = 0; i < spriteIndex; i++) {
       sprite_t *sprite = &sprites[i];
       sprite->texture = images[0];
       vector_t pos;

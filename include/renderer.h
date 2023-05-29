@@ -2,8 +2,8 @@
 #define _RENDERER_H_
 
 #include "context.h"
-#include "game.h"
 #include "entity.h"
+#include "game.h"
 
 void RenderShape(context_t *context, float *points, vector_t pos, float angle,
                  float radius, bool close);
