@@ -91,6 +91,7 @@ window.update = () => {
   if (globalThis.app) {
     app.sprites = patch.sprites;
     app.spriteCount = patch.spriteCount;
+    app.objects = yti.kvl.deh.length;
   }
 };
 

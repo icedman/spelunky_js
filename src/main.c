@@ -22,6 +22,12 @@
 #include "quickjs-libc.h"
 #include "quickjs.h"
 
+// #define RUN_BINARY_SCRIPT
+
+#ifdef RUN_BINARY_SCRIPT
+#include "../script.c"
+#endif
+
 #define MAX_IMAGES 16
 static char imagePaths[MAX_IMAGES][256];
 static SDL_Texture *images[MAX_IMAGES];
@@ -238,22 +244,6 @@ void ScriptingInit() {
   }
 }
 
-void ScriptingShutdown() {
-  js_std_free_handlers(rt);
-  JS_FreeContext(ctx);
-  JS_FreeRuntime(rt);
-}
-
-void ScriptUpdate() {
-  char *input = "window.update();";
-  JSValue ret =
-      JS_Eval(ctx, input, strlen(input), "<input>", JS_EVAL_TYPE_GLOBAL);
-  if (JS_IsException(ret)) {
-    js_std_dump_error(ctx);
-    JS_ResetUncatchableError(ctx);
-  }
-}
-
 const char *keyA = "a";
 const char *keyS = "s";
 const char *keyZ = "z";
@@ -272,38 +262,93 @@ const int keyCodes[] = {
     0, 38, 40, 37, 39, 65, 83, 90, 88, 27, 32,
 };
 
+static bool keyDownFuncsReady[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static bool keyUpFuncsReady[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static JSValue keyDownFuncs [10];
+static JSValue keyUpFuncs [10];
+static bool updateFuncReady = 0;
+static JSValue updateFunc;
+
+JSValue CompileFunction(const char* source)
+{
+    JSValue func_val = JS_Eval(ctx, source, strlen(source), "<input>", JS_EVAL_TYPE_GLOBAL);
+    if (JS_IsException(func_val)) {
+        JS_FreeValue(ctx, func_val);
+        return JS_EXCEPTION;
+    }
+
+    JSValue bytecode = JS_GetGlobalObject(ctx);
+    JSValue func = JS_GetPropertyStr(ctx, bytecode, "main");
+    JS_FreeValue(ctx, bytecode);
+
+    return func;
+}
+
+void ScriptingShutdown() {
+  for(int i=0; i<10; i++) {
+    if (keyDownFuncsReady[i]) {
+      JS_FreeValue(ctx, keyDownFuncs[i]);
+    }
+    if (keyUpFuncsReady[i]) {
+      JS_FreeValue(ctx, keyUpFuncs[i]);
+    }
+  }
+  if (updateFuncReady) {
+    JS_FreeValue(ctx, updateFunc);
+  }
+  js_std_free_handlers(rt);
+  JS_FreeContext(ctx);
+  JS_FreeRuntime(rt);
+}
+
+void ScriptUpdate() {
+  if (!updateFuncReady) {
+    char *script = "function main() { window.update(); }";
+    updateFunc = CompileFunction(script);
+    printf("%s\n", script);
+    updateFuncReady = 1;
+  }
+
+  JSValue result = JS_Call(ctx, updateFunc, JS_UNDEFINED, 0, NULL);
+  if (JS_IsException(result)) {
+    js_std_dump_error(ctx);
+    JS_ResetUncatchableError(ctx);
+  }
+}
+
 void ScriptSendKeyDown(int key) {
-  char script[64];
-  sprintf(script, "window.onkeydown(new KeyEvent('%s', %d));", keyNames[key],
-          keyCodes[key]);
-  JSValue ret =
-      JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
-  if (JS_IsException(ret)) {
+  if (!keyDownFuncsReady[key]) {
+    char script[128];
+    sprintf(script, "function main() { window.onkeydown(new KeyEvent('%s', %d)); }", keyNames[key],
+            keyCodes[key]);
+    keyDownFuncs[key] = CompileFunction(script);
+    printf("%s\n", script);
+    keyDownFuncsReady[key] = 1;
+  }
+
+  JSValue result = JS_Call(ctx, keyDownFuncs[key], JS_UNDEFINED, 0, NULL);
+  if (JS_IsException(result)) {
     js_std_dump_error(ctx);
     JS_ResetUncatchableError(ctx);
   }
 }
 
 void ScriptSendKeyUp(int key) {
-  char script[64];
-  sprintf(script, "window.onkeyup(new KeyEvent('%s', %d));", keyNames[key],
-          keyCodes[key]);
-  JSValue ret =
-      JS_Eval(ctx, script, strlen(script), "<input>", JS_EVAL_TYPE_GLOBAL);
-  if (JS_IsException(ret)) {
+  if (!keyUpFuncsReady[key]) {
+    char script[128];
+    sprintf(script, "function main() { window.onkeyup(new KeyEvent('%s', %d)); }", keyNames[key],
+            keyCodes[key]);
+    keyUpFuncs[key] = CompileFunction(script);
+    printf("%s\n", script);
+    keyUpFuncsReady[key] = 1;
+  }
+
+  JSValue result = JS_Call(ctx, keyUpFuncs[key], JS_UNDEFINED, 0, NULL);
+  if (JS_IsException(result)) {
     js_std_dump_error(ctx);
     JS_ResetUncatchableError(ctx);
   }
 }
-
-// {
-//     char *input = "window.update();";
-//     JSValue ret = JS_Eval(ctx, input, strlen(input), "<input>",
-//     JS_EVAL_TYPE_GLOBAL); if (JS_IsException(ret)) {
-//         js_std_dump_error(ctx);
-//         JS_ResetUncatchableError(ctx);
-//     }
-// }
 
 void ScriptRunFile(char *path) {
   FILE *fp = fopen(path, "r");
@@ -339,6 +384,8 @@ void _drawLine(void *ctx, vector_t v1, vector_t v2) {
 }
 
 int main(int argc, char **argv) {
+  TX_TIMER_BEGIN
+
   for (int i = 0; i < MAX_IMAGES; i++) {
     imagePaths[i][0] = 0;
     images[i] = NULL;
@@ -394,11 +441,14 @@ int main(int argc, char **argv) {
   context.renderer = renderer;
   context.drawLine = _drawLine;
 
-  rect_t *tr = 0;
-  vector_t tv;
-  int trIdx = -1;
+  int objectCount = 0;
 
+  #ifdef RUN_BINARY_SCRIPT
+  js_std_eval_binary(ctx, qjsc_index, qjsc_index_size, 0);
+  #else
   ScriptRunFile("./dist/index.js");
+  #endif
+  js_std_loop(ctx);
 
   int frameSkip = 0;
 
@@ -458,11 +508,14 @@ int main(int argc, char **argv) {
         lastJSTicks = ticks;
         spriteIndex = 0;
 
-        TX_TIMER_BEGIN
+        TX_TIMER_RESET
         ScriptUpdate();
         js_std_loop(ctx);
         TX_TIMER_END
         // printf("%fsecs\n", _cpu_time_used);
+
+        JSValue oc = JS_GetPropertyStr(ctx, app, "objects");
+        JS_ToInt32(ctx, &objectCount, oc);
 
         JSValue c = JS_GetPropertyStr(ctx, app, "spriteCount");
         int spriteCount = 0;
@@ -491,10 +544,10 @@ int main(int argc, char **argv) {
             JS_ToInt32(ctx, &sprite->sw, prop);
             prop = JS_GetPropertyUint32(ctx, spr, 8);
             JS_ToInt32(ctx, &sprite->sh, prop);
-            // JS_FreeValue(ctx, spr);
+            JS_FreeValue(ctx, spr);
             // printf("%d (%d, %d)\n", i, sprite->x, sprite->y);
           }
-          // JS_FreeValue(ctx, sprs);
+          JS_FreeValue(ctx, sprs);
           // printf(">%d\n", spriteCount);
         }
       }
@@ -517,9 +570,11 @@ int main(int argc, char **argv) {
     for (int i = 0; i < KEYS_END; i++) {
       if (game.keysPressed[i]) {
         ScriptSendKeyDown(i);
+        js_std_loop(ctx);
       }
       if (game.keysReleased[i]) {
         ScriptSendKeyUp(i);
+        js_std_loop(ctx);
       }
     }
 
@@ -551,6 +606,17 @@ int main(int argc, char **argv) {
       _drawImage(&context, sprite, pos);
     }
 
+    {
+      char text[32];
+      sprintf(text, "%f [%d]", _cpu_time_used, objectCount);
+      vector_t pos;
+      pos.x = 20;
+      pos.y = 20;
+      context.state->r = 255;
+      context.state->g = 255;
+      context.state->b = 255;
+      ContextDrawText(&context, text, pos, 1, 1);
+    }
     SDL_RenderPresent(renderer);
   }
 

@@ -46,6 +46,7 @@ quickjs_src_includes = include_directories(
 m_dep = cc.find_library('m', required : true, disabler: true)
 sdl2_dep = dependency('SDL2', required: true, disabler: true)
 sdl2_image_dep = dependency('SDL2_image', required: true, disabler: true)
+# v8_dep = dependency('v8', required: true, disabler: true)
 
 executable('spe',
     'src/main.c',
