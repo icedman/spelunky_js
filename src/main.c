@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include "context.h"
 #include "data.h"
@@ -66,6 +68,16 @@ typedef struct sprite_t {
 #define MAX_SPRITES 1024
 static sprite_t sprites[MAX_SPRITES];
 static int spriteIndex = 0;
+
+typedef struct text_t {
+  char text[128];
+  int x;
+  int y;
+} text_t;
+
+#define MAX_TEXTS 32
+static text_t texts[MAX_TEXTS];
+static int textIndex = 0;
 
 SDL_Texture *_loadImage(context_t *context, char *path) {
   SDL_Renderer *renderer = (SDL_Renderer *)context->renderer;
@@ -350,6 +362,14 @@ void ScriptSendKeyUp(int key) {
   }
 }
 
+void ScriptRun(char* code) {
+  JSValue ret = JS_Eval(ctx, code, strlen(code), "<input>", JS_EVAL_TYPE_GLOBAL);
+  if (JS_IsException(ret)) {
+    js_std_dump_error(ctx);
+    JS_ResetUncatchableError(ctx);
+  }
+}
+
 void ScriptRunFile(char *path) {
   FILE *fp = fopen(path, "r");
   if (fp) {
@@ -361,11 +381,7 @@ void ScriptRunFile(char *path) {
     fread(content, sz, 1, fp);
     // fprintf(stderr, "%s\n", content);
     fclose(fp);
-    JSValue ret = JS_Eval(ctx, content, sz, path, JS_EVAL_TYPE_GLOBAL);
-    if (JS_IsException(ret)) {
-      js_std_dump_error(ctx);
-      JS_ResetUncatchableError(ctx);
-    }
+    ScriptRun(content);
     free(content);
   }
 }
@@ -379,7 +395,6 @@ void _drawLine(void *ctx, vector_t v1, vector_t v2) {
   SDL_SetRenderDrawColor(renderer, context->state->r * alpha,
                          context->state->g * alpha, context->state->b * alpha,
                          255);
-  // printf(">%d\n", context->state->r);
   SDL_RenderDrawLine(renderer, v1.x, v1.y, v2.x, v2.y);
 }
 
@@ -411,8 +426,6 @@ int main(int argc, char **argv) {
   GameEnterMenu(&game);
 
   // game.scene = &testScene;
-
-  int frames = 0;
 
   SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
   SDL_EnableScreenSaver();
@@ -449,6 +462,7 @@ int main(int argc, char **argv) {
   js_std_loop(ctx);
 
   int spriteCount = 0;
+  int textCount = 0;
   int objectCount = 0;
 
   int lastTicks = SDL_GetTicks();
@@ -516,11 +530,14 @@ int main(int argc, char **argv) {
           // printf("%fsecs\n", _cpu_time_used);
         }
 
-        JSValue oc = JS_GetPropertyStr(ctx, app, "objects");
-        JS_ToInt32(ctx, &objectCount, oc);
+        // JSValue oc = JS_GetPropertyStr(ctx, app, "objects");
+        // JS_ToInt32(ctx, &objectCount, oc);
 
-        JSValue c = JS_GetPropertyStr(ctx, app, "spriteCount");
-        JS_ToInt32(ctx, &spriteCount, c);
+        JSValue sc = JS_GetPropertyStr(ctx, app, "spriteCount");
+        JS_ToInt32(ctx, &spriteCount, sc);
+        
+        JSValue tc = JS_GetPropertyStr(ctx, app, "textCount");
+        JS_ToInt32(ctx, &textCount, tc);
 
         if (spriteCount > 0) {
           spriteIndex = 0;
@@ -552,6 +569,31 @@ int main(int argc, char **argv) {
           JS_FreeValue(ctx, sprs);
           // printf(">%d\n", spriteCount);
         }
+
+        if (textCount > 0) {
+          textIndex = 0;
+          JSValue txts = JS_GetPropertyStr(ctx, app, "texts");
+          for (int i = 0; i < textCount; i++) {
+            text_t *text = &texts[textIndex++];
+            JSValue txt = JS_GetPropertyUint32(ctx, txts, i);
+
+            JSValue prop = JS_GetPropertyUint32(ctx, txt, 0); // font
+            // JS_ToInt32(ctx, &sprite->ax, prop);
+            prop = JS_GetPropertyUint32(ctx, txt, 1); // text
+            char *str = JS_ToCString(ctx, prop);
+            if (str) {
+              strcpy(text->text, str);
+              JS_FreeCString(ctx, str);
+            }
+            prop = JS_GetPropertyUint32(ctx, txt, 2); // x
+            JS_ToInt32(ctx, &text->x, prop);
+            prop = JS_GetPropertyUint32(ctx, txt, 3); // text
+            JS_ToInt32(ctx, &text->y, prop);
+
+            JS_FreeValue(ctx, txt);
+          }
+          JS_FreeValue(ctx, txts);
+        }
       }
     }
 
@@ -579,12 +621,6 @@ int main(int argc, char **argv) {
         js_std_loop(ctx);
       }
     }
-
-    // frameSkip++;
-    // if (frameSkip % 2 == 0) {
-    //   frameSkip = 0;
-    //   continue;
-    // }
 
     if (spriteIndex == 0)
       continue;
@@ -620,6 +656,20 @@ int main(int argc, char **argv) {
       context.state->b = 255;
       ContextDrawText(&context, text, pos, 1, 1);
     }
+
+    ContextSave(&context);
+    for(int i=0; i<textCount; i++) {
+      text_t *text = &texts[i];
+      vector_t pos;
+      pos.x = text->x * SCALE;
+      pos.y = text->y * SCALE + (16 * SCALE);
+      context.state->r = 255;
+      context.state->g = 255;
+      context.state->b = 255;
+      context.state->stroke = 4;
+      ContextDrawText(&context, text->text, pos, (SCALE * 0.6), 1);
+    }
+    ContextRestore(&context);
     SDL_RenderPresent(renderer);
   }
 

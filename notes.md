@@ -110,3 +110,22 @@ cd(qbc, hzb, qbc.rbc)
 
 // oGame.step
 function nd(hzb, izb)
+
+// draw text
+function lnd(lsh, msh, nyh) {
+  // uyh.nai(nyh.toString(), lsh, msh, -1, -1, 0, 1, 1);
+}
+
+// draw text
+ebi.prototype.qkl = function (lsh, msh, fkl, pai, qai, rai, owh, gei)
+
+// snake
+
+function ck(hzb, izb) {
+dk = oSnake.step
+
+{
+  ob.bi {
+    mi. << step >>
+  }
+}

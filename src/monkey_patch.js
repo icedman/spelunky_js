@@ -108,7 +108,7 @@ class Audio extends Elm {
 }
 
 let imageId = 0;
-class Image extends Elm {
+class HTMLImageElement extends Elm {
   _src = '';
   get src() {
     return this._src;
@@ -127,10 +127,14 @@ class Image extends Elm {
   }
 }
 
+class Image extends HTMLImageElement {}
+
 class Canvas extends Elm {
   getContext(type) {
     if (type == '2d') {
-      return new Context2d();
+      var ctx = new Context2d();
+      ctx.canvas = this;
+      return ctx;
     }
     return null;
   }
@@ -146,14 +150,22 @@ elements = {
 };
 
 window = {
+  performance: {},
   location: 'local',
+  addEventListener: (evt) => {
+    console.log(evt);
+  },
+  update: () => {},
+  onkeyup: () => {},
+  onkeydown: () => {},
+  onload: () => {},
   setTimeout: setTimeout,
   requestAnimFrame: () => {},
   XMLHttpRequest: () => {},
   getTime: () => {
     return window.time;
     // return new Date().getTime()
-  }
+  },
 };
 window.time = 0;
 
@@ -165,6 +177,10 @@ navigator = {
 
 document = {
   body: new Elm('body'),
+
+  addEventListener: (evt) => {
+    console.log(evt);
+  },
 
   getElementById: (id) => {
     // console.log(`getElementById ${id}`);
@@ -182,6 +198,7 @@ document = {
     return new Elm();
   },
 };
+window.document = document;
 
 alert = console.log;
 
@@ -196,6 +213,12 @@ class KeyEvent {
   preventDefault() {}
 }
 
+debug = (c) => {console.log(c);}
+
+// function isElectron() {
+//   return false;
+// }
+
 module.exports = {
   XMLHttpRequest,
   Audio,
@@ -206,3 +229,4 @@ module.exports = {
   window,
   document,
 };
+
