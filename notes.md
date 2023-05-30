@@ -100,3 +100,13 @@ yti.kvl.deh[203].csl.xji
 
 // "with"
 function zwh() 
+
+// heavy?
+var deh = yti.yni();
+var deh = lvh.bui();
+
+// approximatelyZero
+cd(qbc, hzb, qbc.rbc)
+
+// oGame.step
+function nd(hzb, izb)

@@ -32,7 +32,7 @@
 static char imagePaths[MAX_IMAGES][256];
 static SDL_Texture *images[MAX_IMAGES];
 
-#define SCALE 2
+#define SCALE 2.5
 #define WIDTH (320 * SCALE)
 #define HEIGHT (240 * SCALE)
 
@@ -107,11 +107,18 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
 
   // // SDL_RenderCopy(renderer, image, NULL, &dest);
   SDL_Point center;
-  center.x = 0; // sprite->ax;
-  center.y = 0; // sprite->ay;
+  center.x = 0; // sprite->ax * scale;
+  center.y = 0; // sprite->ay * scale;
 
-  dest.x -= sprite->ax * scale;
-  dest.y -= sprite->ay * scale;
+  // vector_t p1, p2;
+  // p1.x = dest.x;
+  // p1.y = dest.y;
+  // p2.x = dest.x + sprite->sw * scale;
+  // p2.y = dest.y + sprite->sh * scale;
+  // ContextDrawLine(context, p1, p2);
+
+  // dest.x -= sprite->ax * scale;
+  // dest.y -= sprite->ay * scale;
 
   SDL_Rect src;
   src.x = sprite->sx;
@@ -122,13 +129,6 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   bool flipped = sprite->flipped == -1;
   SDL_RenderCopyEx(renderer, sprite->texture, &src, &dest, 0, &center,
                    flipped ? SDL_FLIP_HORIZONTAL : 0);
-
-  // vector_t p1, p2;
-  // p1.x = dest.x;
-  // p1.y = dest.y;
-  // p2.x = dest.x + 32;
-  // p2.y = dest.y + 32;
-  // ContextDrawLine(context, p1, p2);
 }
 
 static JSRuntime *rt = 0;
@@ -441,8 +441,6 @@ int main(int argc, char **argv) {
   context.renderer = renderer;
   context.drawLine = _drawLine;
 
-  int objectCount = 0;
-
   #ifdef RUN_BINARY_SCRIPT
   js_std_eval_binary(ctx, qjsc_index, qjsc_index_size, 0);
   #else
@@ -450,7 +448,8 @@ int main(int argc, char **argv) {
   #endif
   js_std_loop(ctx);
 
-  int frameSkip = 0;
+  int spriteCount = 0;
+  int objectCount = 0;
 
   int lastTicks = SDL_GetTicks();
   int lastJSTicks = lastTicks;
@@ -504,7 +503,7 @@ int main(int argc, char **argv) {
 
     {
       float dt = ticks - lastJSTicks;
-      if (dt > 15) {
+      if (dt > 6) {
         lastJSTicks = ticks;
         spriteIndex = 0;
 
@@ -512,14 +511,17 @@ int main(int argc, char **argv) {
         ScriptUpdate();
         js_std_loop(ctx);
         TX_TIMER_END
-        // printf("%fsecs\n", _cpu_time_used);
+
+        if (_cpu_time_used > 0.05) {
+          // printf("%fsecs\n", _cpu_time_used);
+        }
 
         JSValue oc = JS_GetPropertyStr(ctx, app, "objects");
         JS_ToInt32(ctx, &objectCount, oc);
 
         JSValue c = JS_GetPropertyStr(ctx, app, "spriteCount");
-        int spriteCount = 0;
         JS_ToInt32(ctx, &spriteCount, c);
+
         if (spriteCount > 0) {
           spriteIndex = 0;
           JSValue sprs = JS_GetPropertyStr(ctx, app, "sprites");
@@ -594,6 +596,7 @@ int main(int argc, char **argv) {
     GameRender(&game, &context);
     ContextRestore(&context);
 
+    // single spritesheet
     if (images[0] == NULL && imagePaths[0][0] != 0) {
       images[0] = _loadImage(&context, imagePaths[0]);
     }
@@ -607,8 +610,8 @@ int main(int argc, char **argv) {
     }
 
     {
-      char text[32];
-      sprintf(text, "%f [%d]", _cpu_time_used, objectCount);
+      char text[128];
+      sprintf(text, "%f  objects:%d  sprites:%d", _cpu_time_used, objectCount, spriteCount);
       vector_t pos;
       pos.x = 20;
       pos.y = 20;
@@ -625,6 +628,8 @@ int main(int argc, char **argv) {
   tx_stats();
   printf("bye\n");
 
+  // freeup all images
+  
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
 

@@ -1,12 +1,13 @@
 const { debug, patch } = require('./spelunky.js');
 
 // qzi.prototype.tah
-patch.drawObject = (obj, sprite, ax, ay, rot, x, y, f, g, h) => {
+patch.drawObject = (obj, sprite, ax, ay, rot, x, y, f, g, h, i) => {
   let name = obj.rb;
-  if (sprite && name.includes('sRope')) {
-    console.log(name);
-    console.log(obj.aji.left);
-    // console.log({ name, ax, ay, rot, x, y, f, g, h });
+  if (sprite && name.includes('sSnake')) {
+    Object.keys(obj).forEach((k) => {
+      console.log(obj[k])
+    });
+    // console.log(name, ax, ay, rot, x, y, f, g, h, i);
   }
 };
 
@@ -26,7 +27,6 @@ patch.drawSprite = (
   mfi,
   gei
 ) => {
-  console.log(sprite);
   // console.log(`${sprite['sxb']} ${sprite['txb']}`);
   // console.log(`${ax}, ${ay}, ${x}, ${y}, ${vol}, ${wol}, ${rot}`);
 };
@@ -70,8 +70,8 @@ if (globalThis.os) {
     patch.sprites.push([
       ax,
       ay,
-      x + window.dx + ox,
-      y + window.dy + oy,
+      x + window.dx + ox - ax,
+      y + window.dy + oy - ay,
       flip,
       sx,
       sy,
