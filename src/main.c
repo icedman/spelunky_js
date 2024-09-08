@@ -34,7 +34,7 @@
 static char imagePaths[MAX_IMAGES][256];
 static SDL_Texture *images[MAX_IMAGES];
 
-#define SCALE 2.5
+#define SCALE 3
 #define WIDTH (320 * SCALE)
 #define HEIGHT (240 * SCALE)
 
@@ -84,7 +84,7 @@ SDL_Texture *_loadImage(context_t *context, char *path) {
   SDL_Surface *temp = IMG_Load(path);
   if (!temp) {
     printf("unable to load %s\n", path);
-    return;
+    return NULL;
   }
   SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, temp);
   SDL_FreeSurface(temp);
@@ -206,6 +206,7 @@ static JSContext *JS_NewCustomContext(JSRuntime *rt) {
 void ScriptingInit() {
   // init scripting
   rt = JS_NewRuntime();
+  JS_SetMaxStackSize(rt, JS_DEFAULT_STACK_SIZE * 2);
   js_std_set_worker_new_context_func(JS_NewCustomContext);
   js_std_init_handlers(rt);
   ctx = JS_NewCustomContext(rt);
@@ -310,7 +311,7 @@ void ScriptingShutdown() {
   }
   js_std_free_handlers(rt);
   JS_FreeContext(ctx);
-  JS_FreeRuntime(rt);
+  // JS_FreeRuntime(rt);
 }
 
 void ScriptUpdate() {
@@ -405,7 +406,7 @@ int main(int argc, char **argv) {
     imagePaths[i][0] = 0;
     images[i] = NULL;
   }
-  FastRandomInit(0);
+  FastRandomSeed(0);
 
   ScriptingInit();
 
@@ -422,7 +423,7 @@ int main(int argc, char **argv) {
   TestSceneInit(&testScene);
   sceneMenu_t menuScene;
   MenuSceneInit(&menuScene);
-  game.menu = &menuScene;
+  game.menu = (void*)&menuScene;
   GameEnterMenu(&game);
 
   // game.scene = &testScene;
@@ -517,7 +518,7 @@ int main(int argc, char **argv) {
 
     {
       float dt = ticks - lastJSTicks;
-      if (dt > 6) {
+      if (dt > 15) {
         lastJSTicks = ticks;
         spriteIndex = 0;
 

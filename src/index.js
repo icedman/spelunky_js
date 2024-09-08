@@ -96,7 +96,7 @@ window.update = () => {
   // window.time = new Date().getTime();
   window.time += 1000;
   window.frame++;
-  window.skipUpdate = (window.frame % 2) == 0;
+  window.skipUpdate = (window.frame % 2) != 0;
   patch.sprites = [];
   patch.texts = [];
   
@@ -114,15 +114,28 @@ window.update = () => {
 };
 
 // skip frame updates
+if (false)
 ob.bi.forEach((b) => {
-  if (b.rb == 'oPlayer1') {
+  if (['oGame', 'oGamepad', 'oScreen', 'oCharacter', 'oPlayer1',
+      'oWhip', 'oWhipPre', 'oIntro', 'oTitle'].includes(b.rb)) {
     return;
   }
+  // if (b.rb.includes('oBlood')) {
+  //   return;
+  // }
+  // if (b.rb.includes('oArrow')) {
+  //   return;
+  // }
+  // if (!['oTreasure', 'oJar', 'oItem'].includes(b.rb)) {
+  //   console.log(`add frame skip ${b.rb}`);
+  //   return;
+  // }
   if (typeof(b.mi) == 'function') {
       b._mi = b.mi.bind(b);
-      b.mi = (function() {
-          if (window.skipUpdate) return
-          b._mi(...arguments);
+      b.mi = (function(a1,a2) {
+        // console.log(this.rb);
+        if (window.skipUpdate) return;
+        this._mi(a1,a2);
       }).bind(b)
   }
 })

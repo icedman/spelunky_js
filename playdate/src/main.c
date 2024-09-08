@@ -43,15 +43,15 @@ void _drawLine(void *ctx, vector_t v1, vector_t v2) {
   int x2 = (int)v2.x;
   int y2 = (int)v2.y;
   int width = (int)context->state->stroke;
-  uint8_t *kColor = kColorWhite;
+  LCDColor kColor = kColorWhite;
   if (context->state->g == 155) {
-    kColor = get_pattern(gray);
+    kColor = (LCDColor)get_pattern(gray);
   }
   if (context->state->g == 100) {
-    kColor = get_pattern(gray_3);
+    kColor = (LCDColor)get_pattern(gray_3);
   }
   if (context->state->dark) {
-    kColor = get_pattern(darkgray_2);
+    kColor = (LCDColor)get_pattern(darkgray_2);
   }
   pd->graphics->drawLine(x1, y1, x2, y2, width, kColor);
 }
@@ -71,8 +71,7 @@ __declspec(dllexport)
     MenuSceneInit(&menuScene);
 
     game.gamePad = true;
-    game.menu = &menuScene;
-    // game.race = &gameScene;
+    game.menu = (void*)&menuScene;
     GameEnterMenu(&game);
     // GameEnterRace(&game);
 

@@ -26,7 +26,7 @@ src_includes = include_directories(
     'include'
 )
 
-add_global_arguments('-DCONFIG_VERSION="2021-03-27"', language: 'c')
+add_global_arguments('-DCONFIG_VERSION="2024-02-14"', language: 'c')
 add_global_arguments('-DCONFIG_BIGNUM', language: 'c')
 add_global_arguments('-Denviron="DEV"', language: 'c')
 quickjs_src_files = [

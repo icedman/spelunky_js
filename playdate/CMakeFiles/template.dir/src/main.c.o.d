@@ -1,18 +1,19 @@
 CMakeFiles/template.dir/src/main.c.o: \
- /home/iceman/Developer/Projects/games/spe/playdate/src/main.c \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/src/main.c \
  /usr/include/stdc-predef.h /usr/include/stdio.h \
  /usr/include/bits/libc-header-start.h /usr/include/features.h \
  /usr/include/features-time64.h /usr/include/bits/wordsize.h \
  /usr/include/bits/timesize.h /usr/include/sys/cdefs.h \
  /usr/include/bits/long-double.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/13.1.1/include/stddef.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/13.1.1/include/stdarg.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/14.1.1/include/stddef.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/14.1.1/include/stdarg.h \
  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
  /usr/include/bits/time64.h /usr/include/bits/types/__fpos_t.h \
  /usr/include/bits/types/__mbstate_t.h \
  /usr/include/bits/types/__fpos64_t.h /usr/include/bits/types/__FILE.h \
  /usr/include/bits/types/FILE.h /usr/include/bits/types/struct_FILE.h \
+ /usr/include/bits/types/cookie_io_functions_t.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/floatn.h \
  /usr/include/bits/floatn-common.h /usr/include/stdlib.h \
  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
@@ -32,9 +33,9 @@ CMakeFiles/template.dir/src/main.c.o: \
  /usr/include/bits/struct_rwlock.h /usr/include/alloca.h \
  /usr/include/bits/stdlib-float.h \
  /home/iceman/Developer/more/PlaydateSDK/C_API/pd_api.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/13.1.1/include/stdint.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/14.1.1/include/stdint.h \
  /usr/include/stdint.h /usr/include/bits/wchar.h \
- /usr/include/bits/stdint-uintn.h \
+ /usr/include/bits/stdint-uintn.h /usr/include/bits/stdint-least.h \
  /home/iceman/Developer/more/PlaydateSDK/C_API/pd_api/pd_api_gfx.h \
  /home/iceman/Developer/more/PlaydateSDK/C_API/pd_api/pd_api_sys.h \
  /home/iceman/Developer/more/PlaydateSDK/C_API/pd_api/pd_api_lua.h \
@@ -52,23 +53,23 @@ CMakeFiles/template.dir/src/main.c.o: \
  /usr/include/bits/mathcalls.h \
  /home/iceman/Developer/more/PlaydateSDK/C_API/pd_api/pd_api_display.h \
  /home/iceman/Developer/more/PlaydateSDK/C_API/pd_api/pd_api_scoreboards.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/context.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/matrix.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/stdtypes.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/context.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/matrix.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/stdtypes.h \
  /usr/include/memory.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/13.1.1/include/stdbool.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/polygon.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/vector.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/data.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/entity.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/context.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/util.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/font.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/game.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/matrix.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/menu.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/game.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/renderer.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/entity.h \
- /home/iceman/Developer/Projects/games/spe/playdate/./game/include/vector.h \
- /home/iceman/Developer/Projects/games/spe/playdate/src/pattern.h
+ /usr/lib/gcc/x86_64-pc-linux-gnu/14.1.1/include/stdbool.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/polygon.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/vector.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/data.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/entity.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/context.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/util.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/font.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/game.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/matrix.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/menu.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/game.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/renderer.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/entity.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/./game/include/vector.h \
+ /home/iceman/Developer/more/playdate/spelunky_js/playdate/src/pattern.h

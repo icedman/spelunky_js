@@ -1,7 +1,13 @@
 #include "util.h"
-#include "fastRandom.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define FAST_RANDOM
+
+#ifdef FAST_RANDOM
+#include "fastRandom.h"
+#endif
 
 static int _allocated = 0;
 static int _freed = 0;
@@ -31,28 +37,23 @@ void tx_set_allocator(void *(*custom_malloc)(size_t),
   tx_free = custom_free;
 }
 
-void RandomSeed(int i) {}
+#ifdef FAST_RANDOM
+void RandomSeed(int i) { FastRandomSeed(0xF1E2D3); }
 
-float Rnd() { return NextDouble(); }
+int Rand(int s, int e) { return FastRand(s, e); }
 
-int Rand(int s, int e) { return NextLowerUpper(s, e); }
+int RndOr(int s, int e) { return FastRndOr(s, e); }
 
-int RndOr(int s, int e) { return NextBool() ? s : e; }
+float Rnd() { return FastRnd(); }
+#else
+void RandomSeed(int i) { srand(i); }
 
-// float Rnd() { return (float)rand() / (float)(RAND_MAX / 1); }
+int Rand(int s, int e) { return s + rand() % (e - s); }
 
-// int Rand(int s, int e) {
-//   int l = e - s;
-//   int i = floor(l * (float)rand() / RAND_MAX);
-//   return s + i;
-// }
+int RndOr(int s, int e) { return rand() % 2 ? s : e; }
 
-// int RndOr(int s, int e) {
-//   if (rand() % 2 == 0) {
-//     return s;
-//   }
-//   return e;
-// }
+float Rnd() { return (float)rand() / (float)RAND_MAX; }
+#endif
 
 void NodeInit(node_t *n, void *data, bool managed) {
   n->data = data;
@@ -78,8 +79,8 @@ void ListInit(list_t *l) {
   l->first = NULL;
   l->last = NULL;
   l->length = 0;
-  l->createNode = NodeCreate;
-  l->destroyNode = NodeDestroy;
+  l->createNode = (void *)NodeCreate;
+  l->destroyNode = (void *)NodeDestroy;
 }
 
 node_t *ListAppend(list_t *l, node_t *n) {
@@ -88,46 +89,46 @@ node_t *ListAppend(list_t *l, node_t *n) {
   }
   l->length++;
   if (l->first == NULL) {
-    l->first = n;
-    l->last = n;
+    l->first = (void *)n;
+    l->last = (void *)n;
     return n;
   }
-  n->prev = l->last;
-  l->last->next = n;
-  l->last = n;
+  n->prev = (void *)l->last;
+  l->last->next = (void *)n;
+  l->last = (void *)n;
   return n;
 }
 
 node_t *ListInsertAfter(list_t *l, node_t *n, node_t *ntarget) {
   if (ntarget == l->last) {
     l->length++;
-    ntarget->next = n;
-    n->prev = ntarget;
+    ntarget->next = (void *)n;
+    n->prev = (void *)ntarget;
     n->next = NULL;
-    l->last = n;
+    l->last = (void *)n;
     return n;
   }
 
-  ((node_t *)(ntarget->next))->prev = n;
+  ((node_t *)(ntarget->next))->prev = (void *)n;
   n->next = ntarget->next;
-  ntarget->next = n;
-  n->prev = ntarget;
+  ntarget->next = (void *)n;
+  n->prev = (void *)ntarget;
   return n;
 }
 
 node_t *ListInsertBefore(list_t *l, node_t *n, node_t *ntarget) {
   l->length++;
   if (ntarget == l->first) {
-    l->first = n;
-    n->next = ntarget;
-    ntarget->prev = n;
+    l->first = (void *)n;
+    n->next = (void *)ntarget;
+    ntarget->prev = (void *)n;
     return n;
   }
 
-  n->next = ntarget;
+  n->next = (void *)ntarget;
   n->prev = ntarget->prev;
-  ((node_t *)(ntarget->prev))->next = n;
-  ntarget->prev = n;
+  ((node_t *)(ntarget->prev))->next = (void *)n;
+  ntarget->prev = (void *)n;
   return n;
 }
 
@@ -138,32 +139,32 @@ void ListRemove(list_t *l, node_t *n) {
       l->last = NULL;
       l->length = 0;
       if (l->destroyNode) {
-        l->destroyNode(n);
+        l->destroyNode((void *)n);
       }
       return;
     }
-    l->last = n->prev;
+    l->last = (void *)n->prev;
     l->last->next = NULL;
     l->length--;
     if (l->destroyNode) {
-      l->destroyNode(n);
+      l->destroyNode((void *)n);
     }
     return;
   }
   if (n == l->first) {
-    l->first = n->next;
+    l->first = (void *)n->next;
     l->first->prev = NULL;
     l->length--;
     if (l->destroyNode) {
-      l->destroyNode(n);
+      l->destroyNode((void *)n);
     }
     return;
   }
 
-  ((node_t *)n->prev)->next = n->next;
-  ((node_t *)n->next)->prev = n->prev;
+  ((node_t *)n->prev)->next = (void *)n->next;
+  ((node_t *)n->next)->prev = (void *)n->prev;
   if (l->destroyNode) {
-    l->destroyNode(n);
+    l->destroyNode((void *)n);
   }
   l->length--;
 }
@@ -181,7 +182,17 @@ node_t *ListNodeAt(list_t *l, int index) {
     if (idx++ == index) {
       break;
     }
-    n = n->next;
+    n = (void *)n->next;
   }
   return n;
+}
+
+void TicksToTime(float lapTicks, char *text) {
+  int tick = lapTicks * 1000;
+  int mins = floor(tick / (1000 * 60));
+  tick -= mins * 1000 * 60;
+  int secs = floor(tick / (1000));
+  tick -= secs * 1000;
+  int millis = floor(tick / 10);
+  sprintf(text, "%02d:%02d:%02d", mins, secs, millis);
 }

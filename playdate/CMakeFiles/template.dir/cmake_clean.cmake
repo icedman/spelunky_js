@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "Source/pdex.so"
   "template.pdx"
   "CMakeFiles/template.dir/game/quickjs/cutils.c.o"
   "CMakeFiles/template.dir/game/quickjs/cutils.c.o.d"

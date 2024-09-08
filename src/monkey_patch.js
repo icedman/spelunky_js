@@ -65,7 +65,7 @@ class Context2d {
 
 class XMLHttpRequest {
   open(method, url) {
-    console.log(url);
+    console.log(`open: ${url}`);
   }
 }
 

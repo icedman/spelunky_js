@@ -20,11 +20,11 @@ void EntitiesUpdate(list_t *entityList, float dt) {
     }
     if (e->life == -1) {
       node_t *rm = n;
-      n = n->next;
+      n = (void*)n->next;
       ListRemove(entityList, rm);
       continue;
     }
-    n = n->next;
+    n = (void*)n->next;
   }
 }
 

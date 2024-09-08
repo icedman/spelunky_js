@@ -15,7 +15,7 @@ void VectorInit(vector_t *v, float x, float y, float z) {
 }
 
 static vector_t vector_rotations[360];
-static vector_rotations_inited = false;
+static bool vector_rotations_inited = false;
 void VectorFromAngle(vector_t *v, float angle) {
   // float r = angle * 0.0174533;
   // float sn = sin(r);
@@ -121,7 +121,7 @@ void VectorNormalize(vector_t *v) {
 
 float VectorLength(vector_t *v) {
   float fx = v->x, fy = v->y, fz = v->z;
-  return sqrt(fx * fx + fy * fy + fz * fz);
+  return sqrt((fx * fx) + (fy * fy) + fz * fz);
 }
 
 void VectorTransform(vector_t *v, matrix_t *m, vector_t *vr) {

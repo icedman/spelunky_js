@@ -3,13 +3,9 @@
 
 #include "stdtypes.h"
 
-void FastRandomInit(int seed);
-int Next();
-int NextUpper(int upperBound);
-int NextLowerUpper(int lowerBound, int upperBound);
-double NextDouble();
-int NextUInt();
-int NextInt();
-bool NextBool();
+void FastRandomSeed(int i);
+int FastRand(int s, int e);
+int FastRndOr(int s, int e);
+float FastRnd();
 
 #endif // _FAST_RANDOM_H_
