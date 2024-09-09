@@ -1,4 +1,4 @@
-globalThis.process = { env: { NODE_ENV: 'development' } };
+globalThis.process = { env: { NODE_ENV: "development" } };
 if (!globalThis.console) {
   globalThis.console = app ? app : { log: () => {} };
 }
@@ -27,21 +27,21 @@ class Context2d {
   lineTo() {}
   fill() {}
   fill() {
-    console.log('fill');
+    console.log("fill");
   }
   drawImage() {}
   // drawImage() {console.log(arguments);}
   // getImageData() {}
   getImageData() {
-    console.log('getImageData');
+    console.log("getImageData");
   }
   createImageData() {}
   createImageData() {
-    console.log('createImageData');
+    console.log("createImageData");
   }
   putImageData() {}
   putImageData() {
-    console.log('putImageData');
+    console.log("putImageData");
   }
   clip() {}
   rect() {}
@@ -71,12 +71,12 @@ class XMLHttpRequest {
 
 class Elm {
   style = {};
-  value = '';
+  value = "";
 
   setAttribute(attr, val) {
     this[attr] = val;
     // console.log(`${attr} ${val}`);
-    if (attr == 'id') {
+    if (attr == "id") {
       elements[val] = this;
     }
   }
@@ -109,7 +109,7 @@ class Audio extends Elm {
 
 let imageId = 0;
 class HTMLImageElement extends Elm {
-  _src = '';
+  _src = "";
   get src() {
     return this._src;
   }
@@ -131,7 +131,7 @@ class Image extends HTMLImageElement {}
 
 class Canvas extends Elm {
   getContext(type) {
-    if (type == '2d') {
+    if (type == "2d") {
       var ctx = new Context2d();
       ctx.canvas = this;
       return ctx;
@@ -151,7 +151,7 @@ elements = {
 
 window = {
   performance: {},
-  location: 'local',
+  location: "local",
   addEventListener: (evt) => {
     console.log(evt);
   },
@@ -170,13 +170,13 @@ window = {
 window.time = 0;
 
 navigator = {
-  userAgent: 'Chrome',
-  platform: 'Linux',
-  appVersion: '?',
+  userAgent: "Chrome",
+  platform: "Linux",
+  appVersion: "?",
 };
 
 document = {
-  body: new Elm('body'),
+  body: new Elm("body"),
 
   addEventListener: (evt) => {
     console.log(evt);
@@ -189,9 +189,9 @@ document = {
   createElement: (e) => {
     // console.log(`createElement ${e}`);
     switch (e) {
-      case 'canvas': {
+      case "canvas": {
         c = new Canvas();
-        elements['canvas'] = c;
+        elements["canvas"] = c;
         return c;
       }
     }
@@ -213,7 +213,9 @@ class KeyEvent {
   preventDefault() {}
 }
 
-debug = (c) => {console.log(c);}
+debug = (c) => {
+  console.log(c);
+};
 
 // function isElectron() {
 //   return false;
@@ -229,4 +231,3 @@ module.exports = {
   window,
   document,
 };
-

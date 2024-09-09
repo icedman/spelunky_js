@@ -129,3 +129,23 @@ dk = oSnake.step
     mi. << step >>
   }
 }
+
+
+
+// gameStepEvent
+function nd(hzb, izb)
+
+// characterStepEvent
+function qd
+
+// isCollisionRectangle
+function ed(
+
+// instance_exists
+function hic
+
+// oGame_Step_0
+function xpb
+
+// oEnemy_Step_0
+function ni(

@@ -2,10 +2,10 @@
 #include <SDL_image.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <vector.h>
 #include <sys/ioctl.h>
+#include <time.h>
 #include <unistd.h>
+#include <vector.h>
 
 #include "context.h"
 #include "data.h"
@@ -73,6 +73,7 @@ typedef struct text_t {
   char text[128];
   int x;
   int y;
+  int size;
 } text_t;
 
 #define MAX_TEXTS 32
@@ -122,13 +123,21 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   center.x = 0; // sprite->ax * scale;
   center.y = 0; // sprite->ay * scale;
 
-  // vector_t p1, p2;
-  // p1.x = dest.x;
-  // p1.y = dest.y;
-  // p2.x = dest.x + sprite->sw * scale;
-  // p2.y = dest.y + sprite->sh * scale;
-  // ContextDrawLine(context, p1, p2);
-
+#if 0
+  vector_t p1, p2, p3, p4;
+  p1.x = dest.x;
+  p1.y = dest.y;
+  p2.x = dest.x + sprite->sw * scale;
+  p2.y = dest.y + sprite->sh * scale;
+  p3 = p1;
+  p3.x = p2.x;
+  p4 = p1;
+  p4.y = p2.y;
+  ContextDrawLine(context, p1, p3);
+  ContextDrawLine(context, p3, p2);
+  ContextDrawLine(context, p2, p4);
+  ContextDrawLine(context, p4, p1);
+#endif
   // dest.x -= sprite->ax * scale;
   // dest.y -= sprite->ay * scale;
 
@@ -275,30 +284,30 @@ const int keyCodes[] = {
     0, 38, 40, 37, 39, 65, 83, 90, 88, 27, 32,
 };
 
-static bool keyDownFuncsReady[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static bool keyUpFuncsReady[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static JSValue keyDownFuncs [10];
-static JSValue keyUpFuncs [10];
+static bool keyDownFuncsReady[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static bool keyUpFuncsReady[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static JSValue keyDownFuncs[10];
+static JSValue keyUpFuncs[10];
 static bool updateFuncReady = 0;
 static JSValue updateFunc;
 
-JSValue CompileFunction(const char* source)
-{
-    JSValue func_val = JS_Eval(ctx, source, strlen(source), "<input>", JS_EVAL_TYPE_GLOBAL);
-    if (JS_IsException(func_val)) {
-        JS_FreeValue(ctx, func_val);
-        return JS_EXCEPTION;
-    }
+JSValue CompileFunction(const char *source) {
+  JSValue func_val =
+      JS_Eval(ctx, source, strlen(source), "<input>", JS_EVAL_TYPE_GLOBAL);
+  if (JS_IsException(func_val)) {
+    JS_FreeValue(ctx, func_val);
+    return JS_EXCEPTION;
+  }
 
-    JSValue bytecode = JS_GetGlobalObject(ctx);
-    JSValue func = JS_GetPropertyStr(ctx, bytecode, "main");
-    JS_FreeValue(ctx, bytecode);
+  JSValue bytecode = JS_GetGlobalObject(ctx);
+  JSValue func = JS_GetPropertyStr(ctx, bytecode, "main");
+  JS_FreeValue(ctx, bytecode);
 
-    return func;
+  return func;
 }
 
 void ScriptingShutdown() {
-  for(int i=0; i<10; i++) {
+  for (int i = 0; i < 10; i++) {
     if (keyDownFuncsReady[i]) {
       JS_FreeValue(ctx, keyDownFuncs[i]);
     }
@@ -332,8 +341,9 @@ void ScriptUpdate() {
 void ScriptSendKeyDown(int key) {
   if (!keyDownFuncsReady[key]) {
     char script[128];
-    sprintf(script, "function main() { window.onkeydown(new KeyEvent('%s', %d)); }", keyNames[key],
-            keyCodes[key]);
+    sprintf(script,
+            "function main() { window.onkeydown(new KeyEvent('%s', %d)); }",
+            keyNames[key], keyCodes[key]);
     keyDownFuncs[key] = CompileFunction(script);
     printf("%s\n", script);
     keyDownFuncsReady[key] = 1;
@@ -349,8 +359,9 @@ void ScriptSendKeyDown(int key) {
 void ScriptSendKeyUp(int key) {
   if (!keyUpFuncsReady[key]) {
     char script[128];
-    sprintf(script, "function main() { window.onkeyup(new KeyEvent('%s', %d)); }", keyNames[key],
-            keyCodes[key]);
+    sprintf(script,
+            "function main() { window.onkeyup(new KeyEvent('%s', %d)); }",
+            keyNames[key], keyCodes[key]);
     keyUpFuncs[key] = CompileFunction(script);
     printf("%s\n", script);
     keyUpFuncsReady[key] = 1;
@@ -363,8 +374,9 @@ void ScriptSendKeyUp(int key) {
   }
 }
 
-void ScriptRun(char* code) {
-  JSValue ret = JS_Eval(ctx, code, strlen(code), "<input>", JS_EVAL_TYPE_GLOBAL);
+void ScriptRun(char *code) {
+  JSValue ret =
+      JS_Eval(ctx, code, strlen(code), "<input>", JS_EVAL_TYPE_GLOBAL);
   if (JS_IsException(ret)) {
     js_std_dump_error(ctx);
     JS_ResetUncatchableError(ctx);
@@ -423,7 +435,7 @@ int main(int argc, char **argv) {
   TestSceneInit(&testScene);
   sceneMenu_t menuScene;
   MenuSceneInit(&menuScene);
-  game.menu = (void*)&menuScene;
+  game.menu = (void *)&menuScene;
   GameEnterMenu(&game);
 
   // game.scene = &testScene;
@@ -455,11 +467,12 @@ int main(int argc, char **argv) {
   context.renderer = renderer;
   context.drawLine = _drawLine;
 
-  #ifdef RUN_BINARY_SCRIPT
+#ifdef RUN_BINARY_SCRIPT
   js_std_eval_binary(ctx, qjsc_index, qjsc_index_size, 0);
-  #else
+#else
   ScriptRunFile("./dist/index.js");
-  #endif
+#endif
+
   js_std_loop(ctx);
 
   int spriteCount = 0;
@@ -518,10 +531,12 @@ int main(int argc, char **argv) {
 
     {
       float dt = ticks - lastJSTicks;
-      if (dt > 15) {
-        lastJSTicks = ticks;
-        spriteIndex = 0;
+      // if (dt > 15) {
+      lastJSTicks = ticks;
+      spriteIndex = 0;
+      // }
 
+      {
         TX_TIMER_RESET
         ScriptUpdate();
         js_std_loop(ctx);
@@ -536,7 +551,7 @@ int main(int argc, char **argv) {
 
         JSValue sc = JS_GetPropertyStr(ctx, app, "spriteCount");
         JS_ToInt32(ctx, &spriteCount, sc);
-        
+
         JSValue tc = JS_GetPropertyStr(ctx, app, "textCount");
         JS_ToInt32(ctx, &textCount, tc);
 
@@ -588,8 +603,10 @@ int main(int argc, char **argv) {
             }
             prop = JS_GetPropertyUint32(ctx, txt, 2); // x
             JS_ToInt32(ctx, &text->x, prop);
-            prop = JS_GetPropertyUint32(ctx, txt, 3); // text
+            prop = JS_GetPropertyUint32(ctx, txt, 3); // y
             JS_ToInt32(ctx, &text->y, prop);
+            prop = JS_GetPropertyUint32(ctx, txt, 4); // size
+            JS_ToInt32(ctx, &text->size, prop);
 
             JS_FreeValue(ctx, txt);
           }
@@ -648,7 +665,8 @@ int main(int argc, char **argv) {
 
     {
       char text[128];
-      sprintf(text, "%f  objects:%d  sprites:%d", _cpu_time_used, objectCount, spriteCount);
+      sprintf(text, "%f  objects:%d  sprites:%d", _cpu_time_used, objectCount,
+              spriteCount);
       vector_t pos;
       pos.x = 20;
       pos.y = 20;
@@ -659,7 +677,7 @@ int main(int argc, char **argv) {
     }
 
     ContextSave(&context);
-    for(int i=0; i<textCount; i++) {
+    for (int i = 0; i < textCount; i++) {
       text_t *text = &texts[i];
       vector_t pos;
       pos.x = text->x * SCALE;
@@ -680,7 +698,7 @@ int main(int argc, char **argv) {
   printf("bye\n");
 
   // freeup all images
-  
+
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
 

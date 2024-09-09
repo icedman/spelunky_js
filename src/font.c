@@ -4,7 +4,7 @@
 #include <memory.h>
 #include <stdio.h>
 
-#define P(x, y) (((x)&0xF) << 4) | (((y)&0xF) << 0)
+#define P(x, y) (((x) & 0xF) << 4) | (((y) & 0xF) << 0)
 #define C(c) ord(c)
 
 int fnt[255][8];

@@ -44,8 +44,8 @@ void testRender(game_t *gm, scene_t *scn, context_t *context) {
 }
 
 void TestSceneInit(sceneTest_t *scene) {
-  SceneInit((void*)scene);
-  scene->scene.onEnter = (void*)testEnter;
-  scene->scene.onUpdate = (void*)testUpdate;
-  scene->scene.onRender = (void*)testRender;
+  SceneInit((void *)scene);
+  scene->scene.onEnter = (void *)testEnter;
+  scene->scene.onUpdate = (void *)testUpdate;
+  scene->scene.onRender = (void *)testRender;
 }

@@ -71,7 +71,7 @@ __declspec(dllexport)
     MenuSceneInit(&menuScene);
 
     game.gamePad = true;
-    game.menu = (void*)&menuScene;
+    game.menu = (void *)&menuScene;
     GameEnterMenu(&game);
     // GameEnterRace(&game);
 

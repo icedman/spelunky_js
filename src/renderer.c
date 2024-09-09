@@ -52,6 +52,6 @@ void RenderEntities(list_t *entityList, context_t *context) {
     } else {
       RenderParticle(e, context);
     }
-    n = (void*)n->next;
+    n = (void *)n->next;
   }
 }
