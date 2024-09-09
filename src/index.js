@@ -117,9 +117,8 @@ if (globalThis.os) {
 window.skipUpdate = 0;
 window.shouldSkip = () => {
   window.skipUpdate++;
-  if (window.skipUpdate > 1 + Math.random() * 2) {
+  if (window.skipUpdate > 4) {
     window.skipUpdate = 0;
-    return;
   }
   return window.skipUpdate != 0;
 };
@@ -164,9 +163,9 @@ if (true) {
     ) {
       return;
     }
-    if (["oBlood", "oArrow", "oFlareSpark"].includes(b.rb)) {
-      return;
-    }
+    // if (["oBlood", "oArrow", "oFlareSpark"].includes(b.rb)) {
+    //   return;
+    // }
     if ([!"oTreasure", "oJar", "oItem"].includes(b.rb)) {
       // console.log(`add frame skip ${b.rb}`);
       return;
@@ -174,6 +173,7 @@ if (true) {
     if (typeof b.mi == "function") {
       b._mi = b.mi.bind(b);
       b.mi = function (a1, a2) {
+        // console.log(b.rb);
         // if (window.skipUpdate) return;
         if (window.shouldSkip()) {
           return;

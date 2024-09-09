@@ -43,6 +43,27 @@ quickjs_src_includes = include_directories(
     'quickjs'
 )
 
+quickjit_src_files = [
+'../quickjit/cutils.c',
+'../quickjit/quickjs.c',
+'../quickjit/tccpp.c',
+'../quickjit/i386-asm.c',
+'../quickjit/tccasm.c',
+'../quickjit/tccrun.c',
+'../quickjit/libregexp.c',
+'../quickjit/tccdbg.c',
+'../quickjit/x86_64-gen.c',
+'../quickjit/libtcc.c',
+'../quickjit/tccelf.c',
+'../quickjit/x86_64-link.c',
+'../quickjit/libunicode.c',
+'../quickjit/tccgen.c'
+]
+
+quickjit_src_includes = include_directories(
+'quickjit'
+)
+
 m_dep = cc.find_library('m', required : true, disabler: true)
 sdl2_dep = dependency('SDL2', required: true, disabler: true)
 sdl2_image_dep = dependency('SDL2_image', required: true, disabler: true)
@@ -50,7 +71,12 @@ sdl2_image_dep = dependency('SDL2_image', required: true, disabler: true)
 
 executable('spe',
     'src/main.c',
-    src_files, quickjs_src_files,
-    include_directories: [ src_includes, quickjs_src_includes ],
+    src_files, 
+    quickjs_src_files,
+    # quickjit_src_files,
+    include_directories: [ src_includes, 
+        quickjs_src_includes
+        # quickjit_src_includes
+    ],
     dependencies: [ m_dep, sdl2_dep, sdl2_image_dep ]
 )

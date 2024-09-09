@@ -1,3 +1,4 @@
 dist/*
 script.c
 *.diff
+node_modules

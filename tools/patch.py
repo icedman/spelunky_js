@@ -1,7 +1,7 @@
 w = open('./src/spelunky_b2.js', 'w')
 for l in open('./src/spelunky_b.js'):
     for fn in ['joi','ssi','zwh','yli','qli']:
-        l = l.replace(f"{fn}.arguments", "arguments")
+        l = l.replace(fn + ".arguments", "arguments")
     if 'new Date()' in l:
         l = l.replace('new Date().getTime()', 'window.getTime()');
     if 'function (lsh, msh, fkl, pai, qai, rai, owh, gei)' in l:

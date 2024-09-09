@@ -23,8 +23,8 @@ jjn
 render background
 
 hbc
-> gwk
-> lwk
+-> gwk
+-> lwk
 
 pe()
 scrRoomGem
