@@ -27,11 +27,6 @@ if hd:
     f('./src/spelunky_hd.js')
     f('./src/monkey_patch_hd.js')
 else:
-    if nd:
-        f('./src/spelunky_a.js')
-        f('./src/spelunky_b2.js')
-    else:
-        f('./src/spelunky/spelunky_a.js')
-        f('./src/spelunky/spelunky_b.js')
-    # f('./src/spelunky.js')
+    f('./src/spelunky_a.js')
+    f('./src/spelunky_b2.js')
 f('./src/index.js')
