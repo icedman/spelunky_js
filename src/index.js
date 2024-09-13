@@ -1,8 +1,7 @@
-/* prettier-ignore-start */
-const { window, document, XMLHttpRequest, Image, Audio } = require("./monkey_patch.js");
+const { window, document, XMLHttpRequest, Image, Audio, } = require("./monkey_patch.js");
 const { debug, patch } = require("./spelunky.js");
-/* prettier-ignore-end */
 
+const _images = {};
 ctx = {};
 hyh = 0; // debug
 requestAnimFrame = () => {
@@ -19,7 +18,8 @@ patch = {
 };
 
 Image.prototype.loadImage = (img) => {
-  patch.loadImage(img.id, img.src);
+  // console.log(img);
+  patch.loadImage(img.id, img._src);
 };
 
 debug = {
@@ -80,8 +80,19 @@ if (globalThis.os || isNode) {
   };
 
   patch.drawSprite = (
-    sprite, ax, ay, x, y, flip, wol, rot,
-    aci, bci, lfi, mfi, gei
+    sprite,
+    ax,
+    ay,
+    x,
+    y,
+    flip,
+    wol,
+    rot,
+    aci,
+    bci,
+    lfi,
+    mfi,
+    gei
   ) => {
     var sx = sprite["exb"];
     var sy = sprite["fxb"];
@@ -89,7 +100,17 @@ if (globalThis.os || isNode) {
     var sh = sprite["txb"];
     var ox = sprite["yxb"];
     var oy = sprite["zxb"];
-    app.drawImage(ax, ay, x + window.dx + ox - ax, y + window.dy + oy - ay, flip, sx, sy, sw, sh);
+    app.drawImage(
+      ax,
+      ay,
+      x + window.dx + ox - ax,
+      y + window.dy + oy - ay,
+      flip,
+      sx,
+      sy,
+      sw,
+      sh
+    );
     // return;
     // patch.sprites.push([
     //   ax,
@@ -107,8 +128,19 @@ if (globalThis.os || isNode) {
 
   if (isNode) {
     patch.drawSprite = (
-    sprite, ax, ay, x, y, flip, wol, rot,
-    aci, bci, lfi, mfi, gei
+      sprite,
+      ax,
+      ay,
+      x,
+      y,
+      flip,
+      wol,
+      rot,
+      aci,
+      bci,
+      lfi,
+      mfi,
+      gei
     ) => {
       var sx = sprite["exb"];
       var sy = sprite["fxb"];
@@ -116,16 +148,34 @@ if (globalThis.os || isNode) {
       var sh = sprite["txb"];
       var ox = sprite["yxb"];
       var oy = sprite["zxb"];
-      ctx.strokeStyle = 'rgba(255,255,0,0.5)'
-      ctx.beginPath()
-      ctx.moveTo(x, y)
-      ctx.lineTo(x + sw, y)
-      ctx.lineTo(x + sw, y + sh)
-      ctx.lineTo(x, y + sh)
-      ctx.lineTo(x, y)
-      ctx.closePath();
-      ctx.stroke()
-    }
+
+      ctx.save();
+      ctx.translate(ox - ax + window.dx, oy - ay + window.dy);
+
+      if (false) {
+        ctx.strokeStyle = "rgba(255,255,0,0.5)";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        // console.log([window.dx, window.dy])
+        ctx.lineTo(x + sw, y);
+        ctx.lineTo(x + sw, y + sh);
+        ctx.lineTo(x, y + sh);
+        ctx.lineTo(x, y);
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      var img = _images[0];
+      if (img && sw <= 16) {
+        // console.log(img);
+        ctx.save();
+        // ctx.scale(-1, 1);
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, sw, sh);
+        ctx.restore();
+      }
+
+      ctx.restore();
+    };
   }
 }
 
@@ -238,8 +288,6 @@ if (false) {
   });
 }
 
-window.onload();
-
 function JSON_stringify(obj) {
   let res = [];
   Object.keys(obj).forEach((k) => {
@@ -263,47 +311,70 @@ eic = function (wwh, lsh, msh, zuh, xwh, ywh) {
 };
 
 const keys = {
-  'keyUp': [38, 'ArrowUp'],
-  'keyDown': [40, 'ArrowDown'],
-  'keyLeft': [37, 'ArrowLeft'],
-  'keyRight': [39, 'ArrowRight'],
-  'a': [65, 'a'],
-  's': [83, 's'],
-  'z': [90, 'z'],
-  'x': [88, 'x'],
-  'escape': [27, 'Escape'],
-  'space': [32, 'Space'],
+  up: [38, "ArrowUp"],
+  down: [40, "ArrowDown"],
+  left: [37, "ArrowLeft"],
+  right: [39, "ArrowRight"],
+  a: [65, "a"],
+  s: [83, "s"],
+  z: [90, "z"],
+  x: [88, "x"],
+  escape: [27, "Escape"],
+  space: [32, "Space"],
 };
 
 if (isNode) {
+  patch.loadImage = (id, src) => {
+    loadImage(src).then((image) => {
+      // ctx.drawImage(image, 50, 0, 70, 70)
+      _images[id] = image;
+    });
+    console.log({ id, src });
+  };
   width = 800;
   height = 600;
   run_id = 0;
   const sdl = required("@kmamal/sdl");
-  const { createCanvas } = required("canvas");
-  const canvas = createCanvas(width, height)
-  ctx = canvas.getContext('2d')
-  const sdl_window = sdl.video.createWindow({ title: "Hello, World!" });
+  const { createCanvas, loadImage } = required("canvas");
+  const canvas = createCanvas(width, height);
+  ctx = canvas.getContext("2d");
+  const sdl_window = sdl.video.createWindow({
+    title: "Hello, World!",
+    width,
+    height,
+  });
   sdl_window.on("keyDown", (evt) => {
     if (evt.key == "escape") {
       clearInterval(run_id);
       sdl_window.destroy();
     }
-    console.log(evt.key);
-    window.event = new KeyEvent(evt.key, keys[evt.key]);
+    const key = keys[evt.key];
+    if (!key) {
+      console.log(evt);
+      return;
+    }
+    window.event = new KeyEvent(key[1], key[0]);
     window.onkeydown(window.event);
   });
   sdl_window.on("keyUp", (evt) => {
-    window.event = new KeyEvent(evt.key, keys[evt.key]);
+    const key = keys[evt.key];
+    if (!key) {
+      console.log(evt);
+      return;
+    }
+    window.event = new KeyEvent(key[1], key[0]);
     window.onkeyup(window.event);
   });
 
   _update = () => {
+    _sz = 2.5;
     ctx.save();
-    ctx.scale(2.0);
+    ctx.scale(_sz, _sz);
+    // ctx.translate(window.dx, window.dy);
 
-    ctx.fillStyle = 'rgba(0,0,0,0.5)'
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    // ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height);
     window.update();
     ctx.restore();
     // render
@@ -312,8 +383,10 @@ if (isNode) {
     // patch.sprites.forEach((spr) => {
     //   console.log(JSON.stringify(spr));
     // });
-    const buffer = canvas.toBuffer('raw')
-    sdl_window.render(width, height, width * 4, 'bgra32', buffer)
+    const buffer = canvas.toBuffer("raw");
+    sdl_window.render(width, height, width * 4, "bgra32", buffer);
   };
-  run_id = setInterval(_update, 15);
+  run_id = setInterval(_update, 0);
 }
+
+window.onload();
