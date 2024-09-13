@@ -26,9 +26,15 @@ src_includes = include_directories(
     'include'
 )
 
+
+add_global_arguments('-DUSE_WORKER', language: 'c')
+add_global_arguments('-DCONFIG_PROFILE=n', language: 'c')
+add_global_arguments('-DCONFIG_MSAN=n', language: 'c')
+add_global_arguments('-DCONFIG_ASAN=n', language: 'c')
+add_global_arguments('-DCONFIG_UBSAN=n', language: 'c')
 add_global_arguments('-DCONFIG_VERSION="2024-02-14"', language: 'c')
 add_global_arguments('-DCONFIG_BIGNUM', language: 'c')
-add_global_arguments('-Denviron="DEV"', language: 'c')
+# add_global_arguments('-Denviron="DEV"', language: 'c')
 quickjs_src_files = [
     'quickjs/cutils.c',
     'quickjs/libbf.c',
@@ -41,27 +47,6 @@ quickjs_src_files = [
 
 quickjs_src_includes = include_directories(
     'quickjs'
-)
-
-quickjit_src_files = [
-'../quickjit/cutils.c',
-'../quickjit/quickjs.c',
-'../quickjit/tccpp.c',
-'../quickjit/i386-asm.c',
-'../quickjit/tccasm.c',
-'../quickjit/tccrun.c',
-'../quickjit/libregexp.c',
-'../quickjit/tccdbg.c',
-'../quickjit/x86_64-gen.c',
-'../quickjit/libtcc.c',
-'../quickjit/tccelf.c',
-'../quickjit/x86_64-link.c',
-'../quickjit/libunicode.c',
-'../quickjit/tccgen.c'
-]
-
-quickjit_src_includes = include_directories(
-'quickjit'
 )
 
 m_dep = cc.find_library('m', required : true, disabler: true)

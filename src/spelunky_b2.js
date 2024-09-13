@@ -88976,10 +88976,10 @@ function gkn(elf) {
     }
     dlf =
       dlf +
-      this.fkn.charAt(kkn) +
-      this.fkn.charAt(lkn) +
-      this.fkn.charAt(mkn) +
-      this.fkn.charAt(nkn);
+      fkn.charAt(kkn) +
+      fkn.charAt(lkn) +
+      fkn.charAt(mkn) +
+      fkn.charAt(nkn);
   }
   return dlf;
 }

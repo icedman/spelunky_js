@@ -1,4 +1,8 @@
-globalThis.process = { env: { NODE_ENV: "development" } };
+isNode = true;
+if (!globalThis.process) {
+  globalThis.process = { env: { NODE_ENV: "development" } };
+  isNode = false;
+}
 if (!globalThis.console) {
   globalThis.console = app ? app : { log: () => {} };
 }

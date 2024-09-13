@@ -11,12 +11,12 @@ def f(path):
             continue
         if 'module.exports' in line:
             break
-
         # if 'lcc(udc, "__view_xview__", 0) - ' in  line:
         #     line = line.replace('lcc(udc, "__view_xview__", 0) - ', 'lcc(udc, "__view_xview__", 0) - 1.25 * ')
         # if 'lcc(udc, "__view_yview__", 0) - ' in  line:
         #     line = line.replace('lcc(udc, "__view_yview__", 0) - ', 'lcc(udc, "__view_yview__", 0) - 1.25 * ')
 
+        line = line.replace('required(', 'require(');
         print(line.rstrip())
 
 f('./src/monkey_patch.js')
@@ -30,3 +30,4 @@ else:
     f('./src/spelunky_a.js')
     f('./src/spelunky_b2.js')
 f('./src/index.js')
+# f('./src/node-sdl.js')

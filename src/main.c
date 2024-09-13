@@ -108,10 +108,6 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   // printf("%d %d\n", sprite->sw,sprite->sh);
   // }
 
-  if (sprite->sw > 16 * 8) {
-    return;
-  }
-
   SDL_Rect dest;
   dest.x = vt.x * scale;
   dest.y = vt.y * scale;
@@ -123,7 +119,12 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   center.x = 0; // sprite->ax * scale;
   center.y = 0; // sprite->ay * scale;
 
-#if 0
+#if 1
+  if (sprite->sw > 16 * 8) {
+    return;
+  }
+
+#else
   vector_t p1, p2, p3, p4;
   p1.x = dest.x;
   p1.y = dest.y;
@@ -137,6 +138,8 @@ void _drawImage(context_t *context, sprite_t *sprite, vector_t pos) {
   ContextDrawLine(context, p3, p2);
   ContextDrawLine(context, p2, p4);
   ContextDrawLine(context, p4, p1);
+
+  return;
 #endif
   // dest.x -= sprite->ax * scale;
   // dest.y -= sprite->ay * scale;
@@ -473,7 +476,7 @@ int main(int argc, char **argv) {
   ScriptRunFile("./dist/index.js");
 #endif
 
-  js_std_loop(ctx);
+  // js_std_loop(ctx);
 
   int spriteCount = 0;
   int textCount = 0;
@@ -529,15 +532,14 @@ int main(int argc, char **argv) {
 
     int ticks = SDL_GetTicks();
 
-    {
-      float dt = ticks - lastJSTicks;
-      // if (dt > 15) {
+    float dt = ticks - lastJSTicks;
+    if (dt > 15) {
       lastJSTicks = ticks;
       spriteIndex = 0;
-      // }
 
       {
         TX_TIMER_RESET
+        // printf("====================\n");
         ScriptUpdate();
         js_std_loop(ctx);
         TX_TIMER_END
@@ -555,6 +557,7 @@ int main(int argc, char **argv) {
         JSValue tc = JS_GetPropertyStr(ctx, app, "textCount");
         JS_ToInt32(ctx, &textCount, tc);
 
+        #if 0
         if (spriteCount > 0) {
           spriteIndex = 0;
           JSValue sprs = JS_GetPropertyStr(ctx, app, "sprites");
@@ -585,6 +588,7 @@ int main(int argc, char **argv) {
           JS_FreeValue(ctx, sprs);
           // printf(">%d\n", spriteCount);
         }
+        #endif
 
         if (textCount > 0) {
           textIndex = 0;
@@ -615,14 +619,14 @@ int main(int argc, char **argv) {
       }
     }
 
-    float dt = ticks - lastTicks;
-    if (dt < 12) {
-      continue;
-    }
-    lastTicks = ticks;
-    if (dt > 64) {
-      dt = 64;
-    }
+    // float dt = ticks - lastTicks;
+    // if (dt < 12) {
+    //   continue;
+    // }
+    // lastTicks = ticks;
+    // if (dt > 64) {
+    //   dt = 64;
+    // }
 
     GameUpdate(&game, dt / 1000);
     if (game.done)
@@ -632,11 +636,11 @@ int main(int argc, char **argv) {
     for (int i = 0; i < KEYS_END; i++) {
       if (game.keysPressed[i]) {
         ScriptSendKeyDown(i);
-        js_std_loop(ctx);
+        // js_std_loop(ctx);
       }
       if (game.keysReleased[i]) {
         ScriptSendKeyUp(i);
-        js_std_loop(ctx);
+        // js_std_loop(ctx);
       }
     }
 
@@ -690,6 +694,7 @@ int main(int argc, char **argv) {
     }
     ContextRestore(&context);
     SDL_RenderPresent(renderer);
+    SDL_Delay(16);
   }
 
   GameDestroy(&game);
@@ -701,6 +706,7 @@ int main(int argc, char **argv) {
 
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
+  SDL_Quit();
 
   ScriptingShutdown();
 }

@@ -706,7 +706,7 @@ static JSValue js_std_getenviron(JSContext *ctx, JSValueConst this_val,
     obj = JS_NewObject(ctx);
     if (JS_IsException(obj))
         return JS_EXCEPTION;
-    envp = (void*)environ;
+    envp = NULL; // environ;
     for(idx = 0; envp[idx] != NULL; idx++) {
         name = envp[idx];
         p = strchr(name, '=');
@@ -2902,7 +2902,7 @@ static JSValue js_os_exec(JSContext *ctx, JSValueConst this_val,
     JSValueConst options, args = argv[0];
     JSValue val, ret_val;
     const char **exec_argv, *file = NULL, *str, *cwd = NULL;
-    char **envp = (void*)environ;
+    char **envp = NULL; // environ;
     uint32_t exec_argc, i;
     int ret, pid, status;
     BOOL block_flag = TRUE, use_path = TRUE;
@@ -3096,15 +3096,15 @@ static JSValue js_os_exec(JSContext *ctx, JSValueConst this_val,
     for(i = 0; i < exec_argc; i++)
         JS_FreeCString(ctx, exec_argv[i]);
     js_free(ctx, exec_argv);
-    if (envp != environ) {
-        char **p;
-        p = envp;
-        while (*p != NULL) {
-            js_free(ctx, *p);
-            p++;
-        }
-        js_free(ctx, envp);
-    }
+    // if (envp != environ) {
+    //     char **p;
+    //     p = envp;
+    //     while (*p != NULL) {
+    //         js_free(ctx, *p);
+    //         p++;
+    //     }
+    //     js_free(ctx, envp);
+    // }
     return ret_val;
  exception:
     ret_val = JS_EXCEPTION;
